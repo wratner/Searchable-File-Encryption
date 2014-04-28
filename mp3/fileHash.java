@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 
-public class FileHash {
+public class Index {
 
 	static int spc_count = -1;
 	static String dirLoc = "C:\\Users\\Will\\Desktop\\Spring 2014\\ECE 424\\MP3"
@@ -140,7 +140,7 @@ public class FileHash {
 		return new String(encoded, encoding);
 	}
 
-	FileHash(String targetDir) {
+	Index(String targetDir) {
 		File aFile = new File(targetDir);
 		enc = new MP3Encryption("illinois");
 		Process(aFile);
