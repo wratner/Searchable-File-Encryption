@@ -1,4 +1,4 @@
-package com.mp3local;
+package com.mp3;
 
 import java.util.*;
 import java.io.*;
