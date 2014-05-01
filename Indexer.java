@@ -20,10 +20,9 @@ public class Indexer {
      * stopwords: List of stopwords.
      *
      * Returns:
-     * Map with added index data. If there is a failure in execution, the original
-     * is returned.
+     * Map with added index data.
      */
-    public static Map<String, Set<String>> indexMessage(Map<String, Set<String>> map, String messagePath, String messageID, String separators, List<String> stopwords) {
+    public static Map<String, Set<String>> indexMessage(Map<String, Set<String>> map, String messagePath, String messageID, String separators, List<String> stopwords) throws IOException {
         Set<String> keywords;
         FileReader fileRead;
         String currString;
@@ -32,33 +31,25 @@ public class Indexer {
 
         // PARSE EACH WORD OF THE MESSAGE
         // IF THE WORD IS NOT A STOPWORD, ADD IT TO THE SET OF KEYWORDS
-        fileRead = null;
-        keywords = new HashSet<String>();
-        try {
-            fileRead = new FileReader(messagePath);
+        fileRead = new FileReader(messagePath);
 
-            currString = "";
-            nextChar = fileRead.read();
-            while (nextChar != -1) {
-                if (separators.indexOf((char) nextChar) == -1) {
-                    currString += (char) nextChar;
-                } else if (currString != "") {
-                    if (!stopwords.contains(currString)) {
-                        keywords.add(currString);
-                    }
-                    currString = "";
+        keywords = new HashSet<String>();
+
+        currString = "";
+        nextChar = fileRead.read();
+        while (nextChar != -1) {
+            if (separators.indexOf((char) nextChar) == -1) {
+                currString += (char) nextChar;
+            } else if (currString != "") {
+                if (!stopwords.contains(currString)) {
+                    keywords.add(currString);
                 }
-                nextChar = fileRead.read();
+                currString = "";
             }
-        } catch (IOException e) {
-            keywords.clear();
+            nextChar = fileRead.read();
         }
-        if (fileRead != null) {
-            try {
-                fileRead.close();
-            } catch (IOException e) {
-            }
-        }
+
+        fileRead.close();
 
         // FOR EACH KEYWORD, ADD THIS MESSAGE TO ITS SET OF MESSAGES
         if (map == null) {
@@ -88,14 +79,12 @@ public class Indexer {
      * stopwordsPath: Filepath for stopwords.
      *
      * Returns:
-     * Map with added index data. If there is a failure in execution, the original
-     * is returned.
+     * Map with added index data.
      */
-    public static Map<String, Set<String>> indexMessages(Map<String, Set<String>> map, List<String> messagePaths, List<String> messageIDs, String separatorsPath, String stopwordsPath) {
+    public static Map<String, Set<String>> indexMessages(Map<String, Set<String>> map, List<String> messagePaths, List<String> messageIDs, String separatorsPath, String stopwordsPath) throws IOException {
         FileReader fileRead;
         String currString;
         int nextChar;
-        Boolean exception;
         String separators;
         List<String> stopwords;
 
@@ -106,65 +95,38 @@ public class Indexer {
             return map;
         }
 
-        exception = false;
-
         // PARSE IN SEPARATORS
-/*        fileRead = null;
+/*        fileRead = new FileReader(separatorsPath);
         separators = "";
-        try {
-            fileRead = new FileReader(separatorsPath);
 
-            currString = "";
+        currString = "";
+        nextChar = fileRead.read();
+        while (nextChar != -1) {
+            separators += (char) nextChar;
             nextChar = fileRead.read();
-            while (nextChar != -1) {
-                separators += (char) nextChar;
-                nextChar = fileRead.read();
-            }
-        } catch (IOException e) {
-            exception = true;
-        }
-        if (fileRead != null) {
-            try {
-                fileRead.close();
-            } catch (IOException e) {
-            }
         }
 
-        if (exception) {
-            return map;
-        }*/
+        fileRead.close();*/
+
         separators = "\t\n\r ";
 
         // PARSE IN STOPWORDS
-        fileRead = null;
+        fileRead = new FileReader(stopwordsPath);
         stopwords = new ArrayList<String>();
-        try {
-            fileRead = new FileReader(stopwordsPath);
 
-            currString = "";
+        currString = "";
+        nextChar = fileRead.read();
+        while (nextChar != -1) {
+            if ((char) nextChar != '\n') {
+                currString += (char) nextChar;
+            } else {
+                stopwords.add(currString);
+                currString = "";
+            }
             nextChar = fileRead.read();
-            while (nextChar != -1) {
-                if ((char) nextChar != '\n') {
-                    currString += (char) nextChar;
-                } else {
-                    stopwords.add(currString);
-                    currString = "";
-                }
-                nextChar = fileRead.read();
-            }
-        } catch (IOException e) {
-            exception = true;
-        }
-        if (fileRead != null) {
-            try {
-                fileRead.close();
-            } catch (IOException e) {
-            }
         }
 
-        if (exception) {
-            return map;
-        }
+        fileRead.close();
 
         // INDEX MESSAGES
         for (int i = 0; i < messagePaths.size(); i++) {
@@ -176,9 +138,9 @@ public class Indexer {
     /*
      * Writes a mapping of keywords to message ID's to a file of the following
      * format:
-     * <keyword>:<message id>,<message id>,...
-     * <keyword>:<message id>,<message id>,...
-     * <keyword>:<message id>,<message id>,...
+     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...<MAPPING_DELIM>
+     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...<MAPPING_DELIM>
+     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...<MAPPING_DELIM>
      *
      * Parameters:
      * map: Map to write to the file.
@@ -187,8 +149,7 @@ public class Indexer {
      * Returns:
      * Whether or not the operation was successful.
      */
-    public static Boolean mapToIndexFile(Map<String, Set<String>> map, String indexPath) {
-        Boolean result;
+    public static Boolean mapToIndexFile(Map<String, Set<String>> map, String indexPath) throws IOException {
         FileWriter fileWrite;
         String toWrite;
 
@@ -196,33 +157,23 @@ public class Indexer {
             return false;
         }
 
-        fileWrite = null;
-        result = true;
-        try {
-            fileWrite = new FileWriter(indexPath);
+        fileWrite = new FileWriter(indexPath);
 
-            for (String keyword : map.keySet()) {
-                toWrite = keyword + KEYWORD_DELIM;
-                for (String messageID : map.get(keyword)) {
-                    toWrite += messageID + KEYWORD_DELIM;
-                }
-                toWrite = toWrite.substring(0, toWrite.length() - 1) + '\n';
-
-                for (char nextChar : toWrite.toCharArray()) {
-                    fileWrite.write(nextChar);
-                }
+        for (String keyword : map.keySet()) {
+            toWrite = keyword + KEYWORD_DELIM;
+            for (String messageID : map.get(keyword)) {
+                toWrite += messageID + KEYWORD_DELIM;
             }
-        } catch (IOException e) {
-            result = false;
-        }
-        if (fileWrite != null) {
-            try {
-                fileWrite.close();
-            } catch (IOException e) {
+            toWrite = toWrite.substring(0, toWrite.length() - 1) + MAPPING_DELIM;
+
+            for (char nextChar : toWrite.toCharArray()) {
+                fileWrite.write(nextChar);
             }
         }
 
-        return result;
+        fileWrite.close();
+
+        return true;
     }
 
     /*
@@ -234,7 +185,7 @@ public class Indexer {
      * Returns:
      * The parsed mapping. If there is a failure in execution, null is returned.
      */
-    public static Map<String, Set<String>> indexFileToMap(String indexPath) {
+    public static Map<String, Set<String>> indexFileToMap(String indexPath) throws IOException {
         Map<String, Set<String>> map;
         FileReader fileRead;
         String currString;
@@ -244,45 +195,37 @@ public class Indexer {
 
         map = new HashMap<String, Set<String>>();
 
-        fileRead = null;
-        try {
-            fileRead = new FileReader(indexPath);
-            currString = "";
-            currKeyword = "";
-            currMessages = new HashSet<String>();
+        fileRead = new FileReader(indexPath);
 
-            nextChar = fileRead.read();
-            while (nextChar != -1) {
-                if (((char) nextChar == KEYWORD_DELIM) || ((char) nextChar == MAPPING_DELIM)) {
-                    if (currKeyword == "") {
-                        currKeyword = currString;
-                        currString = "";
-                    } else {
-                        currMessages.add(currString);
-                        currString = "";
-                    }
+        currString = "";
+        currKeyword = "";
+        currMessages = new HashSet<String>();
 
-                    if ((char) nextChar == MAPPING_DELIM) {
-                        if (currKeyword != "") {
-                            map.put(currKeyword, currMessages);
-                        }
-                        currKeyword = "";
-                        currMessages = new HashSet<String>();
-                    }
+        nextChar = fileRead.read();
+        while (nextChar != -1) {
+            if (((char) nextChar == KEYWORD_DELIM) || ((char) nextChar == MAPPING_DELIM)) {
+                if (currKeyword == "") {
+                    currKeyword = currString;
+                    currString = "";
                 } else {
-                    currString += (char) nextChar;
+                    currMessages.add(currString);
+                    currString = "";
                 }
-                nextChar = fileRead.read();
+
+                if ((char) nextChar == MAPPING_DELIM) {
+                    if (currKeyword != "") {
+                        map.put(currKeyword, currMessages);
+                    }
+                    currKeyword = "";
+                    currMessages = new HashSet<String>();
+                }
+            } else {
+                currString += (char) nextChar;
             }
-        } catch (IOException e) {
-            map = null;
+            nextChar = fileRead.read();
         }
-        if (fileRead != null) {
-            try {
-                fileRead.close();
-            } catch (IOException e) {
-            }
-        }
+
+        fileRead.close();
 
         return map;
     }
