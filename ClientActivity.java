@@ -79,29 +79,6 @@ public class ClientActivity extends Activity {
 		// Get the output and show to the user
 	}
 
-	/*
-	 * Parses a mapping of keywords to message ID's from a file.
-	 *
-	 * Parameters:
-	 * indexPath: The filepath for the index file.
-	 *
-	 * Returns:
-	 * The parsed mapping. If there is a failure in execution, null is returned.
-	 */
-	public static Set<String> indexFileToMap(String indexPath, String keyword) throws IOException {
-		Map<String, Set<String>> map;
-
-		map = new HashMap<String, Set<String>>();
-
-
-		currString = "";
-		currKeyword = "";
-		currMessages = new HashSet<String>();
-
-
-		return map;
-	}
-
 	@Override
 	    public void onCreate(Bundle savedInstanceState) {
 	            super.onCreate(savedInstanceState);
