@@ -22,6 +22,7 @@ public class ClientActivity extends Activity {
 	private EditText textField;
 	private Button button;
 	private String messsage;
+	public static final String KEY = "illinois";
 	public static final String SERVER_IP = ""; /* Set your VM's server IP here */
 	public static final int SERVER_PORT = 8888; /*
 												 * Set your VM's server port
@@ -30,7 +31,10 @@ public class ClientActivity extends Activity {
 												 * for your program to listen on
 												 * that number
 												 */
-	public static final String LOOKUP_CMD = "LOOKUP ";
+	public static final String LOOKUP_CMD = "LOOKUP "; 
+	public static final String BYE_CMD = "BYE"; 
+	public static final String DOWNLOAD_CMD = "DOWNLD "; 
+	public static final String REPLY_DATA = "REPLY "; 
 
 	// For Part-1
 	// USE Local Index (cached) and find the documentId from there
@@ -40,6 +44,7 @@ public class ClientActivity extends Activity {
 	// document-ids from the server
 	// and use them to download the files: This would be done by
 	// implementing SSE.Search functionality
+	// Get the output and show to the user
 	public static void Lookup(String keyword, PrintWriter output) {
 		FileReader fileRead;
 
@@ -48,8 +53,12 @@ public class ClientActivity extends Activity {
 		int nextChar;
 		String currKeyword;
 
-		fileRead = new FileReader(indexPath);
+		InputStreamReader inputStreamReader;
+		BufferedReader bufferedReader;
+		String serverOutput;
+		MP3Encryption encryption;
 
+		fileRead = new FileReader(indexPath);
 		documentId = "";
 		currKeyword = "";
 		currString = "";
@@ -71,12 +80,16 @@ public class ClientActivity extends Activity {
 			}
 			nextChar = fileRead.read();
 		}
-
 		fileRead.close();
 
-		output.write("LOOKUP " + documentId); // write the message to
+		output.write(LOOKUP_CMD + documentId);
 
-		// Get the output and show to the user
+                inputStreamReader = new InputStreamReader(client.getInputStream());
+                bufferedReader =  new BufferedReader(inputStreamReader);
+                serverOutput = bufferedReader.readLine();
+
+		encryption = new MP3Encryption(KEY);
+		encryption.decrypt(serverOutput.substring(REPLY_DATA.length()));
 	}
 
 	@Override
