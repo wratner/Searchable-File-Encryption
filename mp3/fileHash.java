@@ -1,4 +1,4 @@
-package com;
+package mp3;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,17 +10,21 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileHash {
 
 	static int spc_count = -1;
-	static String dirLoc = "C:\\Users\\Will\\Desktop\\Spring 2014\\ECE 424\\MP3"
-			+ "\\";
+	// CHANGE TO DIRECTORY YOU WANT ENCRYPTED FILES *******
+	static String dirLoc = "D:\\temp_CS463\\MP3" + "\\";
 	static String dirName = "";
 	static String bFileName = "";
 	static MP3Encryption enc = null;
 	static String encContents = "";
 	static String decContents = "";
+	static List<String> fileList = new ArrayList<String>();
+	static List<String> dirList = new ArrayList<String>();
 
 	static void Process(File aFile) {
 		spc_count++;
@@ -29,6 +33,8 @@ public class FileHash {
 			spcs += " ";
 		if (aFile.isFile()) {
 			System.out.println(spcs + "[FILE] " + aFile.getName());
+
+			dirList.add(aFile.getPath());
 			try {
 				bFileName = getMD5CheckSum(aFile.getPath());
 				String contents = readFile(aFile.getPath(),
@@ -40,6 +46,7 @@ public class FileHash {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
+			fileList.add(bFileName);
 			File bFile = new File(dirLoc + dirName + "\\" + bFileName);
 			try {
 				// copyFile(aFile, bFile);
@@ -140,9 +147,17 @@ public class FileHash {
 		return new String(encoded, encoding);
 	}
 
-	FileHash(String targetDir) {
+	FileHash(String targetDir, String key) {
 		File aFile = new File(targetDir);
-		enc = new MP3Encryption("illinois");
+		enc = new MP3Encryption(key);
 		Process(aFile);
+		try {
+			Indexer.mapToIndexFile(Indexer.indexMessages(null, dirList,
+					fileList, "D:\\temp_CS463\\seperators.txt",
+					"D:\\temp_CS463\\stopwords.txt"), dirLoc + "index.txt");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

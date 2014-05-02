@@ -1,7 +1,7 @@
 /*
   Blind Storage Server
 */
-package mp3;
+//package mp3;
  
 import java.io.BufferedReader;
 import java.io.IOException;
