@@ -49,7 +49,7 @@ public class BlindStorageServer {
                     while (scanner.hasNext()) {
                         builder.append(scanner.nextLine());
                     }
-                    System.out.println("REPLY "+builder.toString());
+                    System.out.println(REPLY_DATA+builder.toString()+"\n"+"\n");
                 } catch (FileNotFoundException e) {
                     out.println(e.getMessage());
                 }
@@ -92,13 +92,16 @@ public class BlindStorageServer {
                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
                 String message = bufferedReader.readLine();
                 if (message.equalsIgnoreCase(BYE_CMD)) {
+                    System.out.println(BYE_CMD);
                     inputStreamReader.close();
                     clientSocket.close();
                     break;
                 } else if (message.startsWith(LOOKUP_CMD)) {
+                    System.out.println(LOOKUP_CMD);
                     String documentId = message.substring(LOOKUP_CMD.length());
                     Lookup(documentId, out);
                 } else if (message.startsWith(DOWNLOAD_CMD)) {
+                    System.out.println(DOWNLOAD_CMD);
                     String blockIndex = message.substring(DOWNLOAD_CMD.length());
                     Download(blockIndex, out);
                 } else {
