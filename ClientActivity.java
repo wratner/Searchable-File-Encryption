@@ -46,9 +46,7 @@ public class ClientActivity extends Activity {
 	public static final String DOWNLOAD_CMD = "DOWNLD ";
 	public static final String REPLY_DATA = "REPLY ";
 	public static String temp = "lol";
-	public static ArrayList<String> documentIdList = new ArrayList<String>();
 	public static ArrayList<String> messageList = new ArrayList<String>();
-	public static ArrayList<String> serverOutputList = new ArrayList<String>();
 
 	static ArrayAdapter<String> adapter;
 
@@ -61,64 +59,51 @@ public class ClientActivity extends Activity {
 	// and use them to download the files: This would be done by
 	// implementing SSE.Search functionality
 	// Get the output and show to the user
-	public static void Lookup(String keyword, PrintWriter output)
-			throws IOException {
+	public static void Lookup(String keyword, PrintWriter output) throws IOException {
+		ArrayList<String> documentIdList;
 
-		String documentId = "";
-		InputStreamReader inputStreamReader;
-		BufferedReader bufferedReader;
-		String serverOutput = null;
+		FileInputStream fileStream;
+		DataInputStream dataIn;
+		BufferedReader buffRead;
+
+		String indexLine;
+		String[] tokens;
+
 		MP3Encryption encryption;
-		int length;
-		/*
-		 * fileRead = new FileReader("/storage/sdcard0/index.txt"); documentId =
-		 * ""; currKeyword = ""; currString = ""; nextChar = fileRead.read();
-		 * while ((nextChar != -1) && (documentId == "")) { if (((char) nextChar
-		 * == KEYWORD_DELIM) || ((char) nextChar == MAPPING_DELIM)) { if
-		 * (currKeyword == "") { currKeyword = currString; currString = ""; }
-		 * else if (currKeyword == keyword) { documentId = currString; }
-		 * 
-		 * if ((char) nextChar == MAPPING_DELIM) { currKeyword = ""; } } else {
-		 * currString += (char) nextChar; } nextChar = fileRead.read(); }
-		 * fileRead.close();
-		 */
+		InputStreamReader inStreamRead;
+		String serverOutput;
 
-		// output.write(LOOKUP_CMD + documentId);
+		documentIdList = new ArrayList<String>();
 		try {
-			FileInputStream fstream = new FileInputStream(
-					"/storage/sdcard0/index.txt");
-			DataInputStream in = new DataInputStream(fstream);
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			String strLine;
-			while ((strLine = br.readLine()) != null) {
-				String[] tokens = strLine.split(" ");
+			fileStream = new FileInputStream("/storage/sdcard0/index.txt");
+			dataIn = new DataInputStream(fileStream);
+			buffRead = new BufferedReader(new InputStreamReader(dataIn));
+			while ((indexLine = buffRead.readLine()) != null) {
+				tokens = indexLine.split(" ");
 				if (tokens[0].equals(keyword)) {
-					documentId = tokens[1];
-					length = Array.getLength(tokens);
-					for (int i = 1; i < length; i++) {
+					for (int i = 1; i < tokens.length; i++) {
 						documentIdList.add(tokens[i]);
 					}
 					break;
 				}
 			}
-			in.close();
+			dataIn.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
+		encryption = new MP3Encryption(KEY);
 		for (String id : documentIdList) {
 			output.write(LOOKUP_CMD + id);
-			inputStreamReader = new InputStreamReader(client.getInputStream());
-			bufferedReader = new BufferedReader(inputStreamReader);
-			serverOutputList.add(bufferedReader.readLine());
+
+			inStreamRead = new InputStreamReader(client.getInputStream());
+			buffRead = new BufferedReader(inputStreamReader);
+			serverOutput = buffRead.readLine();
+
+			messageList.add(encryption.decrypt(serverOutput.substring(REPLY_DATA.length())));
 		}
 
-		encryption = new MP3Encryption(KEY);
 		// documentIdList.add(encryption.decrypt(documentId));
-		for (String s : serverOutputList) {
-			messageList
-					.add(encryption.decrypt(s.substring(REPLY_DATA.length())));
-		}
 		adapter.notifyDataSetChanged();
 
 		return;
