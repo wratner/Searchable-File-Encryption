@@ -1,15 +1,24 @@
-<linearlayout android:layout_height="fill_parent" android:layout_width="fill_parent" android:orientation="vertical" xmlns:android="http://schemas.android.com/apk/res/android">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
 
-<edittext android:id="@+id/editText1" android:inputtype="textMultiLine" android:layout_height="wrap_content" android:layout_width="match_parent">
+    <EditText
+        android:id="@+id/editText1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textMultiLine" >
 
-<requestfocus>
+        <requestFocus>
+        </requestFocus>
+    </EditText>
 
-</requestfocus>
-</edittext>
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Send" >
+    </Button>
 
-
-<button android:id="@+id/button1" android:layout_gravity="center" android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Send">
-
-
-</button>
-</linearlayout>
+</LinearLayout>
