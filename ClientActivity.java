@@ -30,7 +30,10 @@ public class ClientActivity extends Activity {
 	public ListView myListView;
 	// private String messsage;
 	public static final String KEY = "illinois";
-	public static final String SERVER_IP = "172.16.169.189"; /* Set your VM's server IP here */
+	public static final String SERVER_IP = "172.22.152.61"; /*
+															 * Set your VM's
+															 * server IP here
+															 */
 	public static final int SERVER_PORT = 8888; /*
 												 * Set your VM's server port
 												 * here: Make sure the port
@@ -43,10 +46,8 @@ public class ClientActivity extends Activity {
 	public static final String DOWNLOAD_CMD = "DOWNLD ";
 	public static final String REPLY_DATA = "REPLY ";
 	public static String temp = "lol";
-	public static ArrayList<String> documentIdList = new ArrayList<String>();
-	public static ArrayList<String>messageList = new ArrayList<String>();
+	public static ArrayList<String> messageList = new ArrayList<String>();
 
-	
 	static ArrayAdapter<String> adapter;
 
 	// For Part-1
@@ -58,78 +59,55 @@ public class ClientActivity extends Activity {
 	// and use them to download the files: This would be done by
 	// implementing SSE.Search functionality
 	// Get the output and show to the user
-	public static void Lookup(String keyword, PrintWriter output)
-			throws IOException {
+	public static void Lookup(String keyword, PrintWriter output) throws IOException {
+		ArrayList<String> documentIdList;
 
-		String documentId = "";
-		InputStreamReader inputStreamReader;
-		BufferedReader bufferedReader;
-		String serverOutput;
+		FileInputStream fileStream;
+		DataInputStream dataIn;
+		BufferedReader buffRead;
+
+		String indexLine;
+		String[] tokens;
+
 		MP3Encryption encryption;
-		int length;
-		/*fileRead = new FileReader("/storage/sdcard0/index.txt");
-		documentId = "";
-		currKeyword = "";
-		currString = "";
-		nextChar = fileRead.read();
-		while ((nextChar != -1) && (documentId == "")) {
-			if (((char) nextChar == KEYWORD_DELIM)
-					|| ((char) nextChar == MAPPING_DELIM)) {
-				if (currKeyword == "") {
-					currKeyword = currString;
-					currString = "";
-				} else if (currKeyword == keyword) {
-					documentId = currString;
-				}
+		InputStreamReader inStreamRead;
+		String serverOutput;
 
-				if ((char) nextChar == MAPPING_DELIM) {
-					currKeyword = "";
-				}
-			} else {
-				currString += (char) nextChar;
-			}
-			nextChar = fileRead.read();
-		}
-		fileRead.close();*/
-
-		//output.write(LOOKUP_CMD + documentId);
+		documentIdList = new ArrayList<String>();
 		try {
-		FileInputStream fstream = new FileInputStream("/storage/sdcard0/index.txt");
-		DataInputStream in = new DataInputStream(fstream);
-		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-		String strLine;
-		while ((strLine = br.readLine()) != null) {
-			String[] tokens = strLine.split(" ");
-			if(tokens[0].equals(keyword)) {
-				length = Array.getLength(tokens);
-				for (int i = 1; i < length; i++) {
-					messageList.add(tokens[i]);
+			fileStream = new FileInputStream("/storage/sdcard0/index.txt");
+			dataIn = new DataInputStream(fileStream);
+			buffRead = new BufferedReader(new InputStreamReader(dataIn));
+			while ((indexLine = buffRead.readLine()) != null) {
+				tokens = indexLine.split(" ");
+				if (tokens[0].equals(keyword)) {
+					for (int i = 1; i < tokens.length; i++) {
+						documentIdList.add(tokens[i]);
+					}
+					break;
 				}
-				break;
 			}
-		}
-		in.close();
-		} catch (Exception e ) {
+			dataIn.close();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		output.write(LOOKUP_CMD + documentId);
-		inputStreamReader = new InputStreamReader(client.getInputStream());
-		bufferedReader = new BufferedReader(inputStreamReader);
-		serverOutput = bufferedReader.readLine();
-		
-		
-		//messageList.add("Hello World");
 
 		encryption = new MP3Encryption(KEY);
-		documentIdList.add(encryption.decrypt(documentId));
-		messageList.add(encryption.decrypt(serverOutput.substring(REPLY_DATA.length())));
-		
+		for (String id : documentIdList) {
+			output.write(LOOKUP_CMD + id);
+
+			inStreamRead = new InputStreamReader(client.getInputStream());
+			buffRead = new BufferedReader(inputStreamReader);
+			serverOutput = buffRead.readLine();
+
+			messageList.add(encryption.decrypt(serverOutput.substring(REPLY_DATA.length())));
+		}
+
+		// documentIdList.add(encryption.decrypt(documentId));
 		adapter.notifyDataSetChanged();
-		
+
 		return;
-		
-		
+
 	}
 
 	@Override
@@ -142,8 +120,9 @@ public class ClientActivity extends Activity {
 		button = (Button) findViewById(R.id.button1); // reference to the send
 														// button
 		myListView = (ListView) findViewById(R.id.messageListView);
-		
-		adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, messageList);
+
+		adapter = new ArrayAdapter<String>(this,
+				android.R.layout.simple_list_item_1, messageList);
 		myListView.setAdapter(adapter);
 		if (android.os.Build.VERSION.SDK_INT > 9) {
 			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
@@ -160,15 +139,10 @@ public class ClientActivity extends Activity {
 																	// from the
 																	// textfield
 				textField.setText(""); // Reset the text field to blank
-				
-				
-				
-				
-				
 
 				try {
 					client = new Socket(SERVER_IP, SERVER_PORT); // connect to
-																// server
+																	// server
 					output = new PrintWriter(client.getOutputStream(), true);
 					Lookup(keyword, output);
 					// printwriter.flush();
