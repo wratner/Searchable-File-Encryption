@@ -5,6 +5,7 @@ import java.io.*;
 
 public class Indexer {
     private static char KEYWORD_DELIM = ' ';
+    private static String KEY = "illinois";
 
     /*
      * Indexes a single message into a mapping of keywords to sets of messages,
@@ -223,4 +224,49 @@ public class Indexer {
 
         return map;
     }
+
+    /*
+     * Writes a mapping of keywords to message ID's to files of the following
+     * format, with the name of each file being SHA-256(keyword):
+     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...
+     *
+     * Parameters:
+     * map: Map to write to the file.
+     * indexPath: The base filepath for the index files.
+     *
+     * Returns:
+     * Whether or not the operation was successful.
+     */
+    public static Boolean mapToIndexFiles(Map<String, Set<String>> map, String indexPath) throws IOException {
+        FileWriter fileWrite;
+        MP3Encryption encryption;
+        String toWrite;
+
+        if (map == null) {
+            return false;
+        }
+
+        encryption = new MP3Encryption(KEY);
+
+        for (String keyword : map.keySet()) {
+            fileWrite = new FileWriter(indexPath + encryption.hash(keyword));
+
+            toWrite = keyword + KEYWORD_DELIM;
+            for (String messageID : map.get(keyword)) {
+                toWrite += messageID + KEYWORD_DELIM;
+            }
+            toWrite = toWrite.substring(0, toWrite.length() - 1) + '\n';
+
+            encryption.encrypt(toWrite);
+
+            for (char nextChar : toWrite.toCharArray()) {
+                fileWrite.write(nextChar);
+            }
+
+            fileWrite.close();
+        }
+
+        return true;
+    }
+
 }
