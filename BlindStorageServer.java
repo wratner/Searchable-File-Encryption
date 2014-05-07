@@ -83,7 +83,7 @@ public class BlindStorageServer {
         // parameters you may need
 
         try {
-            InetAddress addrr = InetAddress.getByName("172.16.129.246");
+            InetAddress addrr = InetAddress.getByName("172.16.184.240");
             serverSocket = new ServerSocket(SERVER_PORT, 5, addrr);  //Server socket
             if (serverSocket.isBound()) {
                System.out.println("Server port bound: "+  serverSocket.getLocalSocketAddress());
@@ -122,9 +122,9 @@ public class BlindStorageServer {
 
             } catch (IOException ex) {
                 System.err.println("ERROR: Problem in reading a message" + ex);
-            } catch (InterruptedException ex) {
+            /*} catch (InterruptedException ex) {
                 System.err.println("INTERRPT: caguht one"+ ex);
-                return;
+                return;*/
             } catch (java.lang.NullPointerException ex) {
                 System.err.println("NULL: The message was null....");
             }
