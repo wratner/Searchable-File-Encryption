@@ -9,8 +9,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.*;
+import java.lang.InterruptedException;
 import java.lang.StringBuilder;
 import java.lang.System;
+import java.lang.Thread;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -51,6 +54,8 @@ public class BlindStorageServer {
                         builder.append(scanner.nextLine());
                     }
                     System.out.println(REPLY_DATA+builder.toString()+"\n"+"\n");
+                    out.println(REPLY_DATA+builder.toString()+"\n"+"\n");
+                    out.flush();
                 } catch (FileNotFoundException e) {
                     out.println(e.getMessage());
                 }
@@ -78,21 +83,26 @@ public class BlindStorageServer {
         // parameters you may need
 
         try {
-            InetAddress addrr = InetAddress.getByAddress("172.22.152.61");
+            InetAddress addrr = InetAddress.getByName("172.16.129.246");
             serverSocket = new ServerSocket(SERVER_PORT, 5, addrr);  //Server socket
+            if (serverSocket.isBound()) {
+               System.out.println("Server port bound: "+  serverSocket.getLocalSocketAddress());
+            }
         } catch (IOException e) {
             System.err.println("ERROR: Could not listen on server port: " + SERVER_PORT);
             return;
         }
         while (true) {
             // NOTE:  For implementation efficiency, you can handle the client connection (or parts of the client operation) as threads
-
+            System.out.println("rgiht before try");
             try {
                 clientSocket = serverSocket.accept();   //accept the client connection
+                System.out.println("Clicent socket open");
                 inputStreamReader = new InputStreamReader(clientSocket.getInputStream());
                 bufferedReader = new BufferedReader(inputStreamReader); //get the client message
                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
                 String message = bufferedReader.readLine();
+                System.out.println(message);
                 if (message.equalsIgnoreCase(BYE_CMD)) {
                     System.out.println(BYE_CMD);
                     inputStreamReader.close();
@@ -112,6 +122,11 @@ public class BlindStorageServer {
 
             } catch (IOException ex) {
                 System.err.println("ERROR: Problem in reading a message" + ex);
+            } catch (InterruptedException ex) {
+                System.err.println("INTERRPT: caguht one"+ ex);
+                return;
+            } catch (java.lang.NullPointerException ex) {
+                System.err.println("NULL: The message was null....");
             }
         }
 
