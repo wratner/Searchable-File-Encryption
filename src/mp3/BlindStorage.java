@@ -30,14 +30,34 @@ public class BlindStorage {
                 builder.append("\n");
                 line = bufferedReader.readLine();
             }
-            byte[] fileBytes = builder.toString().getBytes();
-            return createBlocks(fileBytes, file.getName());
+            String fileContent = builder.toString();
+            String encFile = enc.encrypt(fileContent);
+            byte[] fileBytes = encFile.getBytes();
+            List<Byte> daBytes = toByteList(fileBytes);
+            return createBlocks(daBytes, file.getName());
         } catch (FileNotFoundException ex) {
             System.out.println(ex.getMessage());
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
         return new ArrayList<String>();
+    }
+
+    public List<Byte> toByteList(byte[] inputBytes) {
+        List<Byte> daBytes = new ArrayList<Byte>();
+        for (byte b : inputBytes) {
+            daBytes.add(b);
+        }
+        return daBytes;
+    }
+
+    public byte[] toByteArray(List<Byte> inputList) {
+        byte[] blockBytes = new byte[inputList.size()];
+        int index = 0;
+        for (byte b : inputList) {
+            blockBytes[index++] = b;
+        }
+        return blockBytes;
     }
 
     /*
@@ -47,31 +67,29 @@ public class BlindStorage {
      * HEADER FORMAT: ??????
      *
      */
-    private List<String> createBlocks(byte[] fileBytes, String message_id) {
+    private List<String> createBlocks(List<Byte> encryptedBytes, String message_id) {
         String header;
-        Integer sizef = ((Double) Math.ceil((double) fileBytes.length / (double) blockSize)).intValue();
+        Integer sizef = ((Double) Math.ceil((double) encryptedBytes.size() / (double) blockSize)).intValue();
         int start = 0;
-        int stop = fileBytes.length;
+        int stop = encryptedBytes.size();
         List<String> output = new ArrayList<String>();
         try {
-            for (start = 0; start < fileBytes.length; start = stop) {
+            for (start = 0; start < encryptedBytes.size(); start = stop) {
                 if (start == 0) {
-                    header = fileBytes.length + ":" + message_id + ";";
+                    header = sizef + ":" + message_id + ";";
                 } else {
-                    header = message_id;
+                    header = message_id + ";";
                 }
-                byte[] headerBytes = header.getBytes();
-                List<Byte> fileByteList = new ArrayList(Arrays.asList(fileBytes));
-                List<Byte> byteList = new ArrayList(Arrays.asList(headerBytes));
-                stop = blockSize - headerBytes.length;
+                List<Byte> headerBytes = toByteList(header.getBytes());
+                List<Byte> byteList = new ArrayList<Byte>();
+                byteList.addAll(headerBytes);
+                stop = blockSize - headerBytes.size() + start;
+                if (stop > encryptedBytes.size()) {
+                    stop = encryptedBytes.size();
+                }
                 // stop index is exclusive
-                byteList.addAll(fileByteList.subList(start, stop));
-                Byte[] block = (Byte[]) byteList.toArray();
-                byte[] blockBytes = new byte[block.length];
-                int index = 0;
-                for (byte b : block) {
-                    blockBytes[index++] = b;
-                }
+                byteList.addAll(encryptedBytes.subList(start, stop));
+                byte[] blockBytes = toByteArray(byteList);
                 String blockString = new String(blockBytes, "UTF-8");
                 output.add(blockString);
             }
@@ -128,6 +146,7 @@ public class BlindStorage {
     }
 
     public boolean addFile(File file) {
+        System.out.println("Adding file...");
         List<String> chunks = chunk(file);
         System.out.println("Unencrypted Length " + chunks.get(0).getBytes().length);
         System.out.println("Encrypted Length " + enc.encrypt(chunks.get(0)).getBytes().length);
@@ -135,6 +154,7 @@ public class BlindStorage {
     }
 
     public static void main(String[] args) {
+        System.out.println("Starting...");
         BlindStorage blind = new BlindStorage(256);
         File file = new File("./main.xml");
         blind.addFile(file);
