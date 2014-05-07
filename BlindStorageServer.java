@@ -78,7 +78,7 @@ public class BlindStorageServer {
         // parameters you may need
 
         try {
-            InetAddress addrr = InetAddress.getByAddress("172.22.152.61")
+            InetAddress addrr = InetAddress.getByAddress("172.22.152.61");
             serverSocket = new ServerSocket(SERVER_PORT, 5, addrr);  //Server socket
         } catch (IOException e) {
             System.err.println("ERROR: Could not listen on server port: " + SERVER_PORT);
