@@ -87,7 +87,7 @@ public class ClientActivity extends Activity {
 
 		encryption = new MP3Encryption(KEY);
 		for (String id : documentIdList) {
-			output.write(DOWNLOAD_CMD + id);
+			output.write(LOOKUP_CMD + id);
 
 			inStreamRead = new InputStreamReader(client.getInputStream());
 			buffRead = new BufferedReader(inputStreamReader);
@@ -114,8 +114,11 @@ public class ClientActivity extends Activity {
 
 		MP3Encryption encryption;
 		InputStreamReader inStreamRead;
+		BufferedReader buffRead;
+
 		String serverOutput;
 		String indexLine;
+		String[] tokens;
 
 		FileOutputStream fileOutStream;
 		DataOutputStream dataOut;
@@ -144,7 +147,7 @@ public class ClientActivity extends Activity {
 				dataOut = new DataOutputStream(fileOutStream);
 				buffWrite = new BufferedWriter(new OutputStreamWriter(dataOut));
 				buffWrite.append(indexLine);
-				dataIn.close();
+				dataOut.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -231,7 +234,7 @@ public class ClientActivity extends Activity {
 				buffWrite.write(indexLine, 0, indexLine.length());
 				buffWrite.newLine()
 			}
-			dataIn.close();
+			dataOut.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
