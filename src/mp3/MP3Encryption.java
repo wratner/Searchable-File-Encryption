@@ -1,4 +1,4 @@
-package com.mp3;
+package mp3;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
