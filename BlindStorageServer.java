@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.StringBuilder;
 import java.lang.System;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class BlindStorageServer {
                     while (scanner.hasNext()) {
                         builder.append(scanner.nextLine());
                     }
-                    System.out.println("REPLY "+builder.toString());
+                    System.out.println(REPLY_DATA+builder.toString()+"\n"+"\n");
                 } catch (FileNotFoundException e) {
                     out.println(e.getMessage());
                 }
@@ -77,7 +78,8 @@ public class BlindStorageServer {
         // parameters you may need
 
         try {
-            serverSocket = new ServerSocket(SERVER_PORT);  //Server socket
+            InetAddress addrr = InetAddress.getByAddress("172.22.152.61");
+            serverSocket = new ServerSocket(SERVER_PORT, 5, addrr);  //Server socket
         } catch (IOException e) {
             System.err.println("ERROR: Could not listen on server port: " + SERVER_PORT);
             return;
@@ -92,13 +94,16 @@ public class BlindStorageServer {
                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
                 String message = bufferedReader.readLine();
                 if (message.equalsIgnoreCase(BYE_CMD)) {
+                    System.out.println(BYE_CMD);
                     inputStreamReader.close();
                     clientSocket.close();
                     break;
                 } else if (message.startsWith(LOOKUP_CMD)) {
+                    System.out.println(LOOKUP_CMD);
                     String documentId = message.substring(LOOKUP_CMD.length());
                     Lookup(documentId, out);
                 } else if (message.startsWith(DOWNLOAD_CMD)) {
+                    System.out.println(DOWNLOAD_CMD);
                     String blockIndex = message.substring(DOWNLOAD_CMD.length());
                     Download(blockIndex, out);
                 } else {
