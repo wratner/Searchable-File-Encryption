@@ -193,7 +193,7 @@ public class ClientActivity extends Activity {
 		BufferedWriter buffWrite;
 
 		File oldCache;
-		File newCache;
+		boolean newCache;
 
 		documentIdList = new ArrayList<String>();
 		indexIndex = 0;
@@ -248,8 +248,7 @@ public class ClientActivity extends Activity {
 
 		oldCache = new File(INDEXFILEPATH);
 		oldCache.delete();
-		newCache = new File(INDEXFILEPATH + "temp");
-		//newCache.renameTo(INDEXFILEPATH);
+		newCache = new File(INDEXFILEPATH + "temp").renameTo(new File(INDEXFILEPATH));
 
 		return documentIdList;
 	}
