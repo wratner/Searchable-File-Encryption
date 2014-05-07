@@ -59,10 +59,14 @@ public class FileHash {
 			}
 		} else if (aFile.isDirectory()) {
 			System.out.println(spcs + "[DIR] " + aFile.getName());
-			if (aFile.getName().equals("farmer-d")
-					|| aFile.getName().equals("fischer-m")
-					|| aFile.getName().equals("forney-j")
-					|| aFile.getName().equals("fossum-d")) {
+			/*if (!aFile.getName().equals("large")
+					&& !aFile.getName().equals("small")
+					&& !aFile.getName().equals("_sent_mail")
+					&& !aFile.getName().equals("inbox")
+					&& !aFile.getName().equals("notes_inbox")
+					&& !aFile.getName().equals("sent")
+					&& !aFile.getName().equals("sent_items")) {*/
+			if (aFile.getName().contains("-")) {
 				dirName = aFile.getName();
 				File newDir = new File(dirLoc + dirName);
 				if (!newDir.exists()) {

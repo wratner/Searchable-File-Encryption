@@ -1,10 +1,15 @@
 package com.example.mp3;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -29,7 +34,7 @@ public class ClientActivity extends Activity {
 	public static final String INDEXFILEPATH = "/storage/sdcard0/index.txt";
 	public static final int CACHEMAXLINES = 30;
 	public static final String KEY = "illinois";
-	public static final String SERVER_IP = "172.16.129.246";// "172.22.152.61";
+	public static final String SERVER_IP = "172.16.184.240";// "172.22.152.61";
 	/*
 	 * Set your VM's server IP here
 	 */
@@ -112,94 +117,143 @@ public class ClientActivity extends Activity {
 	// and use them to download the files: This would be done by
 	// implementing SSE.Search functionality
 	// Get the output and show to the user
-	/*
-	 * public static void Part2Lookup(String keyword, PrintWriter output) throws
-	 * IOException { ArrayList<String> documentIdList;
-	 * 
-	 * MP3Encryption encryption; InputStreamReader inStreamRead; BufferedReader
-	 * buffRead;
-	 * 
-	 * String serverOutput; String indexLine; String[] tokens;
-	 * 
-	 * FileOutputStream fileOutStream; DataOutputStream dataOut; BufferedWriter
-	 * buffWrite;
-	 * 
-	 * encryption = new MP3Encryption(KEY);
-	 * 
-	 * documentIdList = cacheLookup(keyword); if (documentIdList.isEmpty()) { //
-	 * NEED TO HASH KEYWORD BEFORE SENDING REQUEST output.write(LOOKUP_CMD +
-	 * keyword);
-	 * 
-	 * inStreamRead = new InputStreamReader(client.getInputStream()); buffRead =
-	 * new BufferedReader(inStreamRead); serverOutput = buffRead.readLine();
-	 * 
-	 * indexLine =
-	 * encryption.decrypt(serverOutput.substring(REPLY_DATA.length()));
-	 * 
-	 * tokens = indexLine.split(" "); for (int i = 1; i < tokens.length; i++) {
-	 * documentIdList.add(tokens[i]); }
-	 * 
-	 * try { fileOutStream = new FileOutputStream(INDEXFILEPATH); dataOut = new
-	 * DataOutputStream(fileOutStream); buffWrite = new BufferedWriter(new
-	 * OutputStreamWriter(dataOut)); buffWrite.append(indexLine);
-	 * dataOut.close(); } catch (Exception e) { e.printStackTrace(); } }
-	 * 
-	 * for (String id : documentIdList) { output.write(DOWNLOAD_CMD + id);
-	 * 
-	 * inStreamRead = new InputStreamReader(client.getInputStream()); buffRead =
-	 * new BufferedReader(inStreamRead); serverOutput = buffRead.readLine();
-	 * 
-	 * messageList.add(encryption.decrypt(serverOutput.substring(REPLY_DATA.length
-	 * ()))); }
-	 * 
-	 * adapter.notifyDataSetChanged();
-	 * 
-	 * return;
-	 * 
-	 * }
-	 * 
-	 * private static ArrayList<String> cacheLookup(String keyword) throws
-	 * IOException { ArrayList<String> documentIdList; int indexIndex;
-	 * ArrayList<String> indexLines;
-	 * 
-	 * FileInputStream fileInStream; DataInputStream dataIn; BufferedReader
-	 * buffRead;
-	 * 
-	 * String indexLine; String[] tokens;
-	 * 
-	 * FileOutputStream fileOutStream; DataOutputStream dataOut; BufferedWriter
-	 * buffWrite;
-	 * 
-	 * File oldCache; File newCache;
-	 * 
-	 * documentIdList = new ArrayList<String>(); indexIndex = 0; indexLines =
-	 * new ArrayList<String>(); try { fileInStream = new
-	 * FileInputStream(INDEXFILEPATH); dataIn = new
-	 * DataInputStream(fileInStream); buffRead = new BufferedReader(new
-	 * InputStreamReader(dataIn)); while ((indexLine = buffRead.readLine()) !=
-	 * null) { tokens = indexLine.split(" "); if (tokens[0].equals(keyword)) {
-	 * for (int i = 1; i < tokens.length; i++) { documentIdList.add(tokens[i]);
-	 * } } else { indexLines.add(indexLine); if (documentIdList.isEmpty()) {
-	 * indexIndex++; } } } dataIn.close(); } catch (Exception e) {
-	 * e.printStackTrace(); }
-	 * 
-	 * if (documentIdList.isEmpty()) { indexIndex = -1; }
-	 * 
-	 * try { fileOutStream = new FileOutputStream(INDEXFILEPATH + "temp");
-	 * dataOut = new DataOutputStream(fileOutStream); buffWrite = new
-	 * BufferedWriter(new OutputStreamWriter(dataOut)); if (indexLines.size() >=
-	 * CACHEMAXLINES) { if (indexIndex == -1) { indexLines.remove(0); } else {
-	 * indexLine = indexLines.get(indexIndex); indexLines.set(indexIndex,
-	 * indexLines.get(indexLines.size() - 1)); indexLines.set(indexLines.size()
-	 * - 1, indexLine); } } for (indexLine : indexLines) {
-	 * buffWrite.write(indexLine, 0, indexLine.length()); buffWrite.newLine() }
-	 * dataOut.close(); } catch (Exception e) { e.printStackTrace(); }
-	 * 
-	 * oldCache = new File(INDEXFILEPATH); oldCache.delete(); newCache = new
-	 * File(INDEXFILEPATH + "temp"); newCache.renameTo(INDEXFILEPATH);
-	 * 
-	 * return documentIdList; }
-	 */
+	public static void Part2Lookup(String keyword, PrintWriter output) throws IOException {
+		ArrayList<String> documentIdList;
+
+		MP3Encryption encryption;
+		InputStreamReader inStreamRead;
+		String serverOutput;
+		String indexLine;
+		String[] tokens;
+		BufferedReader buffRead;
+
+		FileOutputStream fileOutStream;
+		DataOutputStream dataOut;
+		BufferedWriter buffWrite;
+
+		encryption = new MP3Encryption(KEY);
+
+		documentIdList = cacheLookup(keyword);
+		if (documentIdList.isEmpty()) {
+			// NEED TO HASH KEYWORD BEFORE SENDING REQUEST
+			output.write(LOOKUP_CMD + keyword);
+
+			inStreamRead = new InputStreamReader(client.getInputStream());
+			buffRead = new BufferedReader(inStreamRead);
+			serverOutput = buffRead.readLine();
+
+			indexLine = encryption.decrypt(serverOutput.substring(REPLY_DATA.length()));
+
+			tokens = indexLine.split(" ");
+			for (int i = 1; i < tokens.length; i++) {
+				documentIdList.add(tokens[i]);
+			}
+
+			try {
+				fileOutStream = new FileOutputStream(INDEXFILEPATH);
+				dataOut = new DataOutputStream(fileOutStream);
+				buffWrite = new BufferedWriter(new OutputStreamWriter(dataOut));
+				buffWrite.append(indexLine);
+				dataOut.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		for (String id : documentIdList) {
+			output.write(DOWNLOAD_CMD + id);
+
+			inStreamRead = new InputStreamReader(client.getInputStream());
+			buffRead = new BufferedReader(inStreamRead);
+			serverOutput = buffRead.readLine();
+
+			messageList.add(encryption.decrypt(serverOutput.substring(REPLY_DATA.length())));
+		}
+
+		adapter.notifyDataSetChanged();
+
+		return;
+
+	}
+
+	private static ArrayList<String> cacheLookup(String keyword) throws IOException {
+		ArrayList<String> documentIdList;
+		int indexIndex;
+		String[] tokens;
+		ArrayList<String> indexLines;
+
+		FileInputStream fileInStream;
+		DataInputStream dataIn;
+		BufferedReader buffRead;
+
+		String indexLine;
+
+		FileOutputStream fileOutStream;
+		DataOutputStream dataOut;
+		BufferedWriter buffWrite;
+
+		File oldCache;
+		File newCache;
+
+		documentIdList = new ArrayList<String>();
+		indexIndex = 0;
+		indexLines = new ArrayList<String>();
+		try {
+			fileInStream = new FileInputStream(INDEXFILEPATH);
+			dataIn = new DataInputStream(fileInStream);
+			buffRead = new BufferedReader(new InputStreamReader(dataIn));
+			while ((indexLine = buffRead.readLine()) != null) {
+				tokens = indexLine.split(" ");
+				if (tokens[0].equals(keyword)) {
+					for (int i = 1; i < tokens.length; i++) {
+						documentIdList.add(tokens[i]);
+					}
+				} else {
+					indexLines.add(indexLine);
+					if (documentIdList.isEmpty()) {
+						indexIndex++;
+					}
+				}
+			}
+			dataIn.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (documentIdList.isEmpty()) {
+			indexIndex = -1;
+		}
+
+		try {
+			fileOutStream = new FileOutputStream(INDEXFILEPATH + "temp");
+			dataOut = new DataOutputStream(fileOutStream);
+			buffWrite = new BufferedWriter(new OutputStreamWriter(dataOut));
+			if (indexLines.size() >= CACHEMAXLINES) {
+				if (indexIndex == -1) {
+					indexLines.remove(0);
+				} else {
+					indexLine = indexLines.get(indexIndex);
+					indexLines.set(indexIndex, indexLines.get(indexLines.size() - 1));
+					indexLines.set(indexLines.size() - 1, indexLine);
+				}
+			}
+			for (String i : indexLines) {
+				buffWrite.write(i, 0, i.length());
+				buffWrite.newLine();
+			}
+			dataOut.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		oldCache = new File(INDEXFILEPATH);
+		oldCache.delete();
+		newCache = new File(INDEXFILEPATH + "temp");
+		//newCache.renameTo(INDEXFILEPATH);
+
+		return documentIdList;
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

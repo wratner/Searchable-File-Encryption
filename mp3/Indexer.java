@@ -1,4 +1,4 @@
-package com.mp3;
+package mp3;
 
 import java.util.*;
 import java.io.*;
@@ -87,9 +87,9 @@ public class Indexer {
      * Map with added index data.
      */
     public static Map<String, Set<String>> indexMessages(Map<String, Set<String>> map, List<String> messagePaths, List<String> messageIDs, String separatorsPath, String stopwordsPath) throws IOException {
-        FileReader fileRead;
+        /*FileReader fileRead;
         String currString;
-        int nextChar;
+        int nextChar;*/
         String separators;
 
         FileInputStream fileStream;
@@ -118,7 +118,7 @@ public class Indexer {
 
         fileRead.close();*/
 
-        separators = "\t\n\r ";
+        separators = "\t\n\r\\x0b\\x0c ";
 
         // PARSE IN STOPWORDS
         stopwords = new ArrayList<String>();
