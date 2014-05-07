@@ -83,20 +83,44 @@ public class BlindStorage {
                 List<Byte> headerBytes = toByteList(header.getBytes());
                 List<Byte> byteList = new ArrayList<Byte>();
                 byteList.addAll(headerBytes);
+                // Take into account the header when getting the parts of the file that we need
                 stop = blockSize - headerBytes.size() + start;
+                // Make sure that the size isn't past the max
                 if (stop > encryptedBytes.size()) {
                     stop = encryptedBytes.size();
                 }
                 // stop index is exclusive
                 byteList.addAll(encryptedBytes.subList(start, stop));
+
+                if (stop == encryptedBytes.size()) {
+                    byteList = addPadding(byteList);
+                }
+
                 byte[] blockBytes = toByteArray(byteList);
                 String blockString = new String(blockBytes, "UTF-8");
                 output.add(blockString);
+
             }
         } catch (UnsupportedEncodingException ex) {
             System.out.println(ex.getMessage());
         }
         return output;
+    }
+
+    private List<Byte> addPadding(List<Byte> block) {
+        if (block.size() < blockSize -1 ) {
+            for (int i = block.size(); i < blockSize; i++) {
+                block.add("\0".getBytes()[0]);
+            }
+            return block;
+        }
+        else {
+            return block;
+        }
+    }
+
+    private List<Byte> removePadding(List<Byte> block) {
+        return new ArrayList<Byte>();
     }
 
     /*
