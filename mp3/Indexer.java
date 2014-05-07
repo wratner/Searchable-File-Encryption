@@ -5,7 +5,6 @@ import java.io.*;
 
 public class Indexer {
     private static char KEYWORD_DELIM = ' ';
-    private static char MAPPING_DELIM = '\n';
 
     /*
      * Indexes a single message into a mapping of keywords to sets of messages,
@@ -24,32 +23,38 @@ public class Indexer {
      */
     public static Map<String, Set<String>> indexMessage(Map<String, Set<String>> map, String messagePath, String messageID, String separators, List<String> stopwords) throws IOException {
         Set<String> keywords;
-        FileReader fileRead;
-        String currString;
-        int nextChar;
-        Set<String> messages;
 
-        // PARSE EACH WORD OF THE MESSAGE
-        // IF THE WORD IS NOT A STOPWORD, ADD IT TO THE SET OF KEYWORDS
-        fileRead = new FileReader(messagePath);
+        FileInputStream fileStream;
+        DataInputStream dataIn;
+        BufferedReader buffRead;
+
+        StringTokenizer tokenizer;
+        String messageLine;
+        String newWord;
+
+        Set<String> messages;
 
         keywords = new HashSet<String>();
 
-        currString = "";
-        nextChar = fileRead.read();
-        while (nextChar != -1) {
-            if (separators.indexOf((char) nextChar) == -1) {
-                currString += (char) nextChar;
-            } else if (currString != "") {
-                if (!stopwords.contains(currString)) {
-                    keywords.add(currString);
+        // PARSE EACH WORD OF THE MESSAGE
+        // IF THE WORD IS NOT A STOPWORD, ADD IT TO THE SET OF KEYWORDS
+        try {
+            fileStream = new FileInputStream(messagePath);
+            dataIn = new DataInputStream(fileStream);
+            buffRead = new BufferedReader(new InputStreamReader(dataIn));
+            while ((messageLine = buffRead.readLine()) != null) {
+                tokenizer = new StringTokenizer(messageLine, separators);
+                while (tokenizer.hasMoreTokens()) {
+                    newWord = tokenizer.nextToken();
+                    if (!stopwords.contains(newWord)) {
+                        keywords.add(newWord);
+                    }
                 }
-                currString = "";
             }
-            nextChar = fileRead.read();
+            dataIn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        fileRead.close();
 
         // FOR EACH KEYWORD, ADD THIS MESSAGE TO ITS SET OF MESSAGES
         if (map == null) {
@@ -86,6 +91,11 @@ public class Indexer {
         String currString;
         int nextChar;
         String separators;
+
+        FileInputStream fileStream;
+        DataInputStream dataIn;
+        BufferedReader buffRead;
+        String stopword;
         List<String> stopwords;
 
         if (map == null) {
@@ -111,22 +121,18 @@ public class Indexer {
         separators = "\t\n\r ";
 
         // PARSE IN STOPWORDS
-        fileRead = new FileReader(stopwordsPath);
         stopwords = new ArrayList<String>();
-
-        currString = "";
-        nextChar = fileRead.read();
-        while (nextChar != -1) {
-            if ((char) nextChar != '\n') {
-                currString += (char) nextChar;
-            } else {
-                stopwords.add(currString);
-                currString = "";
+        try {
+            fileStream = new FileInputStream(stopwordsPath);
+            dataIn = new DataInputStream(fileStream);
+            buffRead = new BufferedReader(new InputStreamReader(dataIn));
+            while ((stopword = buffRead.readLine()) != null) {
+                stopwords.add(stopword);
             }
-            nextChar = fileRead.read();
+            dataIn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        fileRead.close();
 
         // INDEX MESSAGES
         for (int i = 0; i < messagePaths.size(); i++) {
@@ -138,9 +144,9 @@ public class Indexer {
     /*
      * Writes a mapping of keywords to message ID's to a file of the following
      * format:
-     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...<MAPPING_DELIM>
-     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...<MAPPING_DELIM>
-     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...<MAPPING_DELIM>
+     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...
+     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...
+     * <keyword><KEYWORD_DELIM><message id><KEYWORD_DELIM><message id>...
      *
      * Parameters:
      * map: Map to write to the file.
@@ -164,7 +170,7 @@ public class Indexer {
             for (String messageID : map.get(keyword)) {
                 toWrite += messageID + KEYWORD_DELIM;
             }
-            toWrite = toWrite.substring(0, toWrite.length() - 1) + MAPPING_DELIM;
+            toWrite = toWrite.substring(0, toWrite.length() - 1) + '\n';
 
             for (char nextChar : toWrite.toCharArray()) {
                 fileWrite.write(nextChar);
@@ -187,45 +193,33 @@ public class Indexer {
      */
     public static Map<String, Set<String>> indexFileToMap(String indexPath) throws IOException {
         Map<String, Set<String>> map;
-        FileReader fileRead;
-        String currString;
-        int nextChar;
-        String currKeyword;
+
+        FileInputStream fileStream;
+        DataInputStream dataIn;
+        BufferedReader buffRead;
+
+        String indexLine;
+        String[] tokens;
         Set<String> currMessages;
 
         map = new HashMap<String, Set<String>>();
 
-        fileRead = new FileReader(indexPath);
-
-        currString = "";
-        currKeyword = "";
-        currMessages = new HashSet<String>();
-
-        nextChar = fileRead.read();
-        while (nextChar != -1) {
-            if (((char) nextChar == KEYWORD_DELIM) || ((char) nextChar == MAPPING_DELIM)) {
-                if (currKeyword == "") {
-                    currKeyword = currString;
-                    currString = "";
-                } else {
-                    currMessages.add(currString);
-                    currString = "";
+        try {
+            fileStream = new FileInputStream(indexPath);
+            dataIn = new DataInputStream(fileStream);
+            buffRead = new BufferedReader(new InputStreamReader(dataIn));
+            while ((indexLine = buffRead.readLine()) != null) {
+                tokens = indexLine.split(" ");
+                currMessages = new HashSet<String>();
+                for (int i = 1; i < tokens.length; i++) {
+                    currMessages.add(tokens[i]);
                 }
-
-                if ((char) nextChar == MAPPING_DELIM) {
-                    if (currKeyword != "") {
-                        map.put(currKeyword, currMessages);
-                    }
-                    currKeyword = "";
-                    currMessages = new HashSet<String>();
-                }
-            } else {
-                currString += (char) nextChar;
+                map.put(tokens[0], currMessages);
             }
-            nextChar = fileRead.read();
+            dataIn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        fileRead.close();
 
         return map;
     }
