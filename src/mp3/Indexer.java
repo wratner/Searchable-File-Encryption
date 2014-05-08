@@ -249,7 +249,7 @@ public class Indexer {
         encryption = new MP3Encryption(KEY);
 
         for (String keyword : map.keySet()) {
-            fileWrite = new FileWriter(indexPath + encryption.hash(keyword));
+            fileWrite = new FileWriter(indexPath);// + encryption.hash(keyword));
 
             toWrite = keyword + KEYWORD_DELIM;
             for (String messageID : map.get(keyword)) {

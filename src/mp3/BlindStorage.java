@@ -19,7 +19,7 @@ public class BlindStorage {
     /*
      * Creates chunks from the file of BLOCK_SIZE
      */
-    private List<String> chunk(File file) {
+    private List<byte[]> chunk(File file) {
         try {
             FileReader reader = new FileReader(file);
             BufferedReader bufferedReader = new BufferedReader(reader);
@@ -31,16 +31,17 @@ public class BlindStorage {
                 line = bufferedReader.readLine();
             }
             String fileContent = builder.toString();
-            String encFile = enc.encrypt(fileContent);
-            byte[] fileBytes = encFile.getBytes();
-            List<Byte> daBytes = toByteList(fileBytes);
+            //String encFile = enc.encrypt(fileContent);
+            //byte[] fileBytes = encFile.getBytes();
+            //List<Byte> daBytes = toByteList(fileBytes);
+            List<Byte> daBytes = toByteList(fileContent.getBytes());
             return createBlocks(daBytes, file.getName());
         } catch (FileNotFoundException ex) {
             System.out.println(ex.getMessage());
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
-        return new ArrayList<String>();
+        return new ArrayList<byte[]>();
     }
 
     public List<Byte> toByteList(byte[] inputBytes) {
@@ -67,14 +68,14 @@ public class BlindStorage {
      * HEADER FORMAT: ??????
      *
      */
-    private List<String> createBlocks(List<Byte> encryptedBytes, String message_id) {
+    private List<byte[]> createBlocks(List<Byte> inputBytes, String message_id) {
         String header;
-        Integer sizef = ((Double) Math.ceil((double) encryptedBytes.size() / (double) blockSize)).intValue();
+        Integer sizef = ((Double) Math.ceil((double) inputBytes.size() / (double) blockSize)).intValue();
         int start = 0;
-        int stop = encryptedBytes.size();
-        List<String> output = new ArrayList<String>();
+        int stop = inputBytes.size();
+        List<byte[]> output = new ArrayList<byte[]>();
         try {
-            for (start = 0; start < encryptedBytes.size(); start = stop) {
+            for (start = 0; start < inputBytes.size(); start = stop) {
                 if (start == 0) {
                     header = sizef + ":" + message_id + ";";
                 } else {
@@ -84,21 +85,22 @@ public class BlindStorage {
                 List<Byte> byteList = new ArrayList<Byte>();
                 byteList.addAll(headerBytes);
                 // Take into account the header when getting the parts of the file that we need
-                stop = blockSize - headerBytes.size() + start;
+                stop = blockSize - headerBytes.size() + start - 1;
                 // Make sure that the size isn't past the max
-                if (stop > encryptedBytes.size()) {
-                    stop = encryptedBytes.size();
+                if (stop > inputBytes.size()) {
+                    stop = inputBytes.size();
                 }
                 // stop index is exclusive
-                byteList.addAll(encryptedBytes.subList(start, stop));
+                byteList.addAll(inputBytes.subList(start, stop));
 
-                if (stop == encryptedBytes.size()) {
+                if (stop == inputBytes.size()) {
                     byteList = addPadding(byteList);
                 }
 
                 byte[] blockBytes = toByteArray(byteList);
                 String blockString = new String(blockBytes, "UTF-8");
-                output.add(blockString);
+                //output.add(blockString);
+                output.add(enc.encrypt(blockString));
 
             }
         } catch (UnsupportedEncodingException ex) {
@@ -108,13 +110,12 @@ public class BlindStorage {
     }
 
     private List<Byte> addPadding(List<Byte> block) {
-        if (block.size() < blockSize -1 ) {
-            for (int i = block.size(); i < blockSize; i++) {
+        if (block.size() < blockSize - 1) {
+            for (int i = block.size(); i < blockSize - 1; i++) {
                 block.add("\0".getBytes()[0]);
             }
             return block;
-        }
-        else {
+        } else {
             return block;
         }
     }
@@ -151,16 +152,58 @@ public class BlindStorage {
      *
      * QUESTION: Paper says to check for something and abort, need to look at this
      */
-    private boolean writeBlocks(String[] blocks, Integer[] locations) {
+    private boolean writeBlocks(List<byte[]> blocks, Integer[] locations) {
+        int prgIndex = 0;
+        for (int i = 0; i < blocks.size(); i++) {
+            Integer location = locations[prgIndex];
+            while (isOccupied(location)) {
+                prgIndex++;
+                location = locations[prgIndex];
+            }
+            try {
+                FileOutputStream blockOutputStream = new FileOutputStream("./" + location);
+                blockOutputStream.write(blocks.get(i));
+                blockOutputStream.close();
+                return true;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    /*
+     * Returns true if there is at least 1 block free
+     * in the first kappa blocks.
+     */
+    private boolean sizef0Success(Integer[] locations) {
+        return true;
+    }
+
+    /*
+     * returns true if all the locations are free
+     */
+    private boolean sizefSuccess(Integer[] locations) {
+        return true;
+    }
+
+    private boolean isOccupied(Integer location) {
         return false;
     }
 
     /*
      * Decrypts a given set of blocks and returns them with headers
      */
-    private String[] decryptBlocks(String[] blocks) {
-        return new String[0];
+    private List<String> decryptBlocks(List<byte[]> blocks) throws UnsupportedEncodingException {
+        List<String> output = new ArrayList<String>();
+        for (byte[] block : blocks) {
+            output.add(new String(enc.decrypt(block), "UTF-8"));
+        }
+        return output;
     }
+
 
     /*
      * Takes a list of blocks and a message id and puts back together the original message
@@ -171,9 +214,42 @@ public class BlindStorage {
 
     public boolean addFile(File file) {
         System.out.println("Adding file...");
-        List<String> chunks = chunk(file);
-        System.out.println("Unencrypted Length " + chunks.get(0).getBytes().length);
-        System.out.println("Encrypted Length " + enc.encrypt(chunks.get(0)).getBytes().length);
+        List<byte[]> chunks = chunk(file);
+        System.out.println("Encrypted Length " + chunks.get(0).length);
+        // Write blocks to file
+        for (int i = 0; i < chunks.size(); i++) {
+            byte[] block = chunks.get(i);
+            try {
+                FileOutputStream blockOutputStream = new FileOutputStream("./" + i);
+                blockOutputStream.write(block);
+                blockOutputStream.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        List<byte[]> encryptedBlocksFromFile = new ArrayList<byte[]>();
+        for (int i = 0; i < chunks.size(); i++) {
+            try {
+                FileInputStream inStream = new FileInputStream("./" + i);
+                byte[] block = new byte[256];
+                if (inStream.read(block) != -1) {
+                    encryptedBlocksFromFile.add(block);
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            for (String block : decryptBlocks(encryptedBlocksFromFile)) {
+                System.out.println(block);
+            }
+        } catch (UnsupportedEncodingException ex) {
+            System.out.println(ex.getMessage());
+        }
         return true;
     }
 
