@@ -2,7 +2,9 @@ package mp3;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -22,6 +24,8 @@ public class BlindStorage {
     private Integer blockSize;
     private MP3Encryption enc;
     private String key = "illinois2";
+    private int kappa = 60; //temp
+    private int alpha = 8;
 
     public BlindStorage(Integer blockSize) {
         this.blockSize = blockSize;
@@ -138,6 +142,15 @@ public class BlindStorage {
         }
         return block;
     }
+    
+    private int maxSize(int sizef) {
+    	sizef = sizef * alpha;
+    	if (sizef > kappa)
+    		return sizef;
+    	else
+    		return kappa;
+    	
+    }
 
     /*
      * gets the placement of blocks using the filename as
@@ -152,23 +165,17 @@ public class BlindStorage {
     		final Charset asciiCs = Charset.forName("US-ASCII");
             final Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
             final SecretKeySpec secret_key = new javax.crypto.spec.SecretKeySpec(asciiCs.encode("key").array(), "HmacSHA256");
-            int Kappa = 10;
             sha256_HMAC.init(secret_key);
             final byte[] mac_data = sha256_HMAC.doFinal(asciiCs.encode(fileName).array());
             int seed = new BigInteger(mac_data).intValue();
 			Random pseudoGenerator = new Random(seed);
-			/*for(int i = 0; i < (1 + (int)(pseudoGenerator.nextInt() * ((Kappa - 1) +1))); i++) {
-				locations.add( (1 + (int)(pseudoGenerator.nextInt() * ((400000 - 1) +1))));
-			}*/
-			for(int i = 0; i < Kappa; i++) {
+			for(int i = 0; i < kappa; i++) {
 				locations.add(pseudoGenerator.nextInt(400000));
 			}
 			
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	return locations;
