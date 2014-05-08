@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -19,13 +20,35 @@ public class BlindStorage {
     private String key = "illinois2";
     private int kappa = 60; //temp
     private int alpha = 8;
-    private int totalSize = 200000;
+    private int totalSize = 10;
     private final String DIR = "./blind/";
+    private byte[] nullBlock;
 
-    public BlindStorage(Integer blockSize) {
+    public BlindStorage(Integer blockSize, boolean server) {
         this.blockSize = blockSize;
         enc = new MP3Encryption("illinois");
+        if (server)
+            initBlocks();
     }
+
+    private void initBlocks() {
+        nullBlock = new byte[256];
+        for (int i = 0; i < 256; i++) {
+            nullBlock[0] = '\0';
+        }
+        for (int i = 0; i < totalSize; i++) {
+            try {
+                FileOutputStream blockOutputStream = new FileOutputStream(DIR + i);
+                blockOutputStream.write(nullBlock);
+                blockOutputStream.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     /*
      * Creates chunks from the file of BLOCK_SIZE
@@ -279,7 +302,22 @@ public class BlindStorage {
 
     private boolean isOccupied(Integer location) {
         File file = new File(DIR + location);
-        return file.exists();
+        try {
+            FileInputStream inStream = new FileInputStream(DIR + location);
+            // Every block is only 256 bytes
+            byte[] block = new byte[256];
+            if (inStream.read(block) != -1) {
+                // yup, just an empty if...
+            }
+            if (Arrays.equals(block, nullBlock)) {
+                return false;
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return true;
     }
 
     /*
@@ -352,7 +390,7 @@ public class BlindStorage {
 
     public static void main(String[] args) {
         System.out.println("Starting...");
-        BlindStorage blind = new BlindStorage(256);
+        BlindStorage blind = new BlindStorage(256, true);
         File file = new File("./main.xml");
         blind.addFile(file);
     }
