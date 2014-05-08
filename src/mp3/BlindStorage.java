@@ -339,54 +339,73 @@ public class BlindStorage {
     /*
      * Takes a list of blocks and a message id and puts back together the original message
      */
-    private String buildMessage(List<byte[]> blocks, String messageId) {
-        return "";
-    }
+    private String buildMessage(List<String> blocks, String messageId) {
+		//String decoded;
+		String message = "";
+		int index = 0;
+		int sizef = 0;
+		for (String s : blocks) {
+			if (s.contains(messageId)) {
+				if (Character.isDigit(s.charAt(0))) {
+					if (s.indexOf(":") == 1) {
+						sizef = Character.getNumericValue(s.charAt(0)); //NEED THIS FOR LATER
+					}
+				}
+				index = s.indexOf(";");
+				message = message + s.replace(s.substring(0, index+1), "");
+						
+				System.out.println(message);
+			}
+		}
+		return message;
+	}
 
-    public boolean addFile(File file) {
-        System.out.println("Adding file...");
-        List<byte[]> chunks = chunk(file);
-        System.out.println("Encrypted Length " + chunks.get(0).length);
+	public boolean addFile(File file) {
+		System.out.println("Adding file...");
+		List<byte[]> chunks = chunk(file);
+		System.out.println("Encrypted Length " + chunks.get(0).length);
+		String decryptedMessage;
+		// Write blocks to file
+		// for (int i = 0; i < chunks.size(); i++) {
+		// byte[] block = chunks.get(i);
+		// try {
+		// FileOutputStream blockOutputStream = new FileOutputStream("./" + i);
+		// blockOutputStream.write(block);
+		// blockOutputStream.close();
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+		// }
+		Integer[] locations = { 0, 1, 2, 3, 4, 5 };
+		System.out.println(writeBlocks(chunks, locations));
 
-        // Write blocks to file
-//        for (int i = 0; i < chunks.size(); i++) {
-//            byte[] block = chunks.get(i);
-//            try {
-//                FileOutputStream blockOutputStream = new FileOutputStream("./" + i);
-//                blockOutputStream.write(block);
-//                blockOutputStream.close();
-//            } catch (FileNotFoundException e) {
-//                e.printStackTrace();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-        Integer[] locations = {0, 1, 2, 3, 4, 5};
-        System.out.println(writeBlocks(chunks, locations));
-
-        // Read Bytes from file
-//        List<byte[]> encryptedBlocksFromFile = new ArrayList<byte[]>();
-//        for (int i = 0; i < chunks.size(); i++) {
-//            try {
-//                FileInputStream inStream = new FileInputStream("./" + i);
-//                byte[] block = new byte[256];
-//                if (inStream.read(block) != -1) {
-//                    encryptedBlocksFromFile.add(block);
-//                }
-//            } catch (FileNotFoundException e) {
-//                e.printStackTrace();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-        List<byte[]> encryptedBlocksFromFile = getBlocks(locations);
-        for (String block : decryptBlocks(encryptedBlocksFromFile)) {
-            System.out.print(block);
-        }
-
-
-        return true;
-    }
+		// Read Bytes from file
+		// List<byte[]> encryptedBlocksFromFile = new ArrayList<byte[]>();
+		// for (int i = 0; i < chunks.size(); i++) {
+		// try {
+		// FileInputStream inStream = new FileInputStream("./" + i);
+		// byte[] block = new byte[256];
+		// if (inStream.read(block) != -1) {
+		// encryptedBlocksFromFile.add(block);
+		// }
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+		// }
+		List<byte[]> encryptedBlocksFromFile = getBlocks(locations);
+		for (String block : decryptBlocks(encryptedBlocksFromFile)) {
+			System.out.print(block);
+		}
+		decryptedMessage = buildMessage(decryptBlocks(encryptedBlocksFromFile), file.getName());
+		System.out.println("***********************MESSAGE***********************");
+		System.out.println(decryptedMessage);
+		System.out.println("***********************MESSAGE***********************");
+		return true;
+	}
 
     public static void main(String[] args) {
         System.out.println("Starting...");
