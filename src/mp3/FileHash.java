@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +21,8 @@ public class FileHash {
 	static String dirName = "";
 	static String bFileName = "";
 	static MP3Encryption enc = null;
-	static String encContents = "";
+	//static String encContents = "";
+	static byte[] encContents;
 	static String decContents = "";
 	static List<String> fileList = new ArrayList<String>();
 	static List<String> dirList = new ArrayList<String>();
@@ -145,8 +148,7 @@ public class FileHash {
 
 	public static String readFile(String path, Charset encoding)
 			throws IOException {
-//		byte[] encoded = Files.readAllBytes(Paths.get(path));
-        byte[] encoded = new byte[5];
+		byte[] encoded = Files.readAllBytes(Paths.get(path));
 		return new String(encoded, encoding);
 	}
 
