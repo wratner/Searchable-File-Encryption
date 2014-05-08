@@ -120,7 +120,10 @@ public class BlindStorage {
     }
 
     private List<Byte> removePadding(List<Byte> block) {
-        return new ArrayList<Byte>();
+        while (block.get(block.size() - 1) == "\0".getBytes()[0]) {
+            block.remove(block.size() - 1);
+        }
+        return block;
     }
 
     /*
