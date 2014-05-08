@@ -63,11 +63,11 @@ public class MP3Encryption {
         }
     }
 
-    public String encrypt(String input) {
+    public byte[] encrypt(String input) {
         try {
             cipher.init(Cipher.ENCRYPT_MODE, key, ivspec);
             byte[] encrypted_bytes = cipher.doFinal(input.getBytes());
-            return bytesToHex(encrypted_bytes);
+            return encrypted_bytes;//bytesToHex(encrypted_bytes);
         } catch (IllegalBlockSizeException e) {
             System.out.println("BLOCK SIZE: Block size is bad");
             System.out.println(e.getMessage());
@@ -81,16 +81,16 @@ public class MP3Encryption {
             System.out.println("ALG: Invalid parameters");
             System.out.println(e.getMessage());
         }
-        return "";
+        return new byte[0];
     }
 
-    public String decrypt(String input) {
+    public byte[] decrypt(byte[] input) {
         try {
-            byte[] inputBytes = hexStringToByteArray(input);
+            byte[] inputBytes = input;//hexStringToByteArray(input);
             //System.out.println(inputBytes.toString());
             cipher.init(Cipher.DECRYPT_MODE, key, ivspec);
             byte[] decryptedBytes = cipher.doFinal(inputBytes);
-            return new String(decryptedBytes, "UTF-8");
+            return decryptedBytes;//new String(decryptedBytes, "UTF-8");
         } catch (IllegalBlockSizeException e) {
             System.out.println("BLOCK SIZE: Block size is bad");
             System.out.println(e.getMessage());
@@ -103,12 +103,12 @@ public class MP3Encryption {
         } catch (InvalidAlgorithmParameterException e) {
             System.out.println("ALG: Invalid parameters");
             System.out.println(e.getMessage());
-        } catch (UnsupportedEncodingException e) {
+        } /*catch (UnsupportedEncodingException e) {
             System.out.println("STRING: Invalid encoding");
             System.out.println(e.getMessage());
-        }
+        }*/
 
-        return "";
+        return new byte[0];
     }
 
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();

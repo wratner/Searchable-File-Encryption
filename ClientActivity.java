@@ -69,6 +69,7 @@ public class ClientActivity extends Activity {
 		MP3Encryption encryption;
 		InputStreamReader inStreamRead;
 		String serverOutput;
+		byte[] serverOutputBytes;
 
 		documentIdList = new ArrayList<String>();
 		try {
@@ -96,9 +97,14 @@ public class ClientActivity extends Activity {
 			inStreamRead = new InputStreamReader(client.getInputStream());
 			buffRead = new BufferedReader(inStreamRead);
 			serverOutput = buffRead.readLine();
+			serverOutputBytes = serverOutput.getBytes();
 
-			messageList.add(encryption.decrypt(serverOutput
-					.substring(REPLY_DATA.length())));
+			serverOutputBytes = encryption.decrypt(serverOutputBytes);
+			
+			serverOutput = new String(serverOutputBytes, "UTF-8");
+			
+			messageList.add(serverOutput.substring(REPLY_DATA.length()));
+			//messageList.add(encryption.decrypt(serverOutputBytes));//.substring(REPLY_DATA.length())));
 			output.close();
 			client = new Socket(SERVER_IP, SERVER_PORT);
 			output = new PrintWriter(client.getOutputStream(), true);
@@ -123,6 +129,7 @@ public class ClientActivity extends Activity {
 		MP3Encryption encryption;
 		InputStreamReader inStreamRead;
 		String serverOutput;
+		byte[] serverOutputBytes;
 		String indexLine;
 		String[] tokens;
 		BufferedReader buffRead;
@@ -141,8 +148,13 @@ public class ClientActivity extends Activity {
 			inStreamRead = new InputStreamReader(client.getInputStream());
 			buffRead = new BufferedReader(inStreamRead);
 			serverOutput = buffRead.readLine();
+			serverOutputBytes = serverOutput.getBytes();
 
-			indexLine = encryption.decrypt(serverOutput.substring(REPLY_DATA.length()));
+			serverOutputBytes = encryption.decrypt(serverOutputBytes);
+			
+			serverOutput = new String(serverOutputBytes, "UTF-8");
+
+			indexLine = serverOutput.substring(REPLY_DATA.length());
 
 			tokens = indexLine.split(" ");
 			for (int i = 1; i < tokens.length; i++) {
@@ -166,8 +178,13 @@ public class ClientActivity extends Activity {
 			inStreamRead = new InputStreamReader(client.getInputStream());
 			buffRead = new BufferedReader(inStreamRead);
 			serverOutput = buffRead.readLine();
+			serverOutputBytes = serverOutput.getBytes();
 
-			messageList.add(encryption.decrypt(serverOutput.substring(REPLY_DATA.length())));
+			serverOutputBytes = encryption.decrypt(serverOutputBytes);
+			
+			serverOutput = new String(serverOutputBytes, "UTF-8");
+			
+			messageList.add(serverOutput.substring(REPLY_DATA.length()));
 		}
 
 		adapter.notifyDataSetChanged();
@@ -193,7 +210,7 @@ public class ClientActivity extends Activity {
 		BufferedWriter buffWrite;
 
 		File oldCache;
-		boolean newCache;
+		
 
 		documentIdList = new ArrayList<String>();
 		indexIndex = 0;
@@ -245,10 +262,10 @@ public class ClientActivity extends Activity {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		
 		oldCache = new File(INDEXFILEPATH);
 		oldCache.delete();
-		newCache = new File(INDEXFILEPATH + "temp").renameTo(new File(INDEXFILEPATH));
+		new File(INDEXFILEPATH + "temp").renameTo(new File(INDEXFILEPATH));
 
 		return documentIdList;
 	}
