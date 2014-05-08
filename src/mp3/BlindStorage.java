@@ -1,11 +1,6 @@
 package mp3;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
@@ -147,40 +142,55 @@ public class BlindStorage {
      */
     /* NEED TO CHANGE HARDCODED VALUES*/
     private List<Integer> getLocations(String fileName) {
-    	List<Integer> locations = new ArrayList<Integer>();
-    	try {
-    		final Charset asciiCs = Charset.forName("US-ASCII");
+        List<Integer> locations = new ArrayList<Integer>();
+        try {
+            final Charset asciiCs = Charset.forName("US-ASCII");
             final Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
             final SecretKeySpec secret_key = new javax.crypto.spec.SecretKeySpec(asciiCs.encode("key").array(), "HmacSHA256");
             int Kappa = 10;
             sha256_HMAC.init(secret_key);
             final byte[] mac_data = sha256_HMAC.doFinal(asciiCs.encode(fileName).array());
             int seed = new BigInteger(mac_data).intValue();
-			Random pseudoGenerator = new Random(seed);
-			/*for(int i = 0; i < (1 + (int)(pseudoGenerator.nextInt() * ((Kappa - 1) +1))); i++) {
-				locations.add( (1 + (int)(pseudoGenerator.nextInt() * ((400000 - 1) +1))));
+            Random pseudoGenerator = new Random(seed);
+            /*for(int i = 0; i < (1 + (int)(pseudoGenerator.nextInt() * ((Kappa - 1) +1))); i++) {
+                locations.add( (1 + (int)(pseudoGenerator.nextInt() * ((400000 - 1) +1))));
 			}*/
-			for(int i = 0; i < Kappa; i++) {
-				locations.add(pseudoGenerator.nextInt(400000));
-			}
-			
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	return locations;
+            for (int i = 0; i < Kappa; i++) {
+                locations.add(pseudoGenerator.nextInt(400000));
+            }
+
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return locations;
     }
 
-    
+
     /*
      * Returns the blocks Identified by blockIds.
      * This reads from the filesystem.
      */
-    private String[] getBlocks(Integer[] blockIds) {
-        return new String[0];
+    private List<byte[]> getBlocks(Integer[] blockIds) {
+        List<byte[]> encryptedBlocksFromFiles = new ArrayList<byte[]>();
+        for (int i = 0; i < blockIds.length; i++) {
+            try {
+                FileInputStream inStream = new FileInputStream("./" + i);
+                // Every block is only 256 bytes
+                byte[] block = new byte[256];
+                if (inStream.read(block) != -1) {
+                    encryptedBlocksFromFiles.add(block);
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return encryptedBlocksFromFiles;
     }
 
     /*
@@ -195,8 +205,14 @@ public class BlindStorage {
      */
     private boolean writeBlocks(List<byte[]> blocks, Integer[] locations) {
         int prgIndex = 0;
+        // Perform our checks
+        if (!(sizefOneBlockSuccess(locations) && allGood(locations, blocks.size()))) {
+            return false;
+        }
+        // Interate through the blocks
         for (int i = 0; i < blocks.size(); i++) {
             Integer location = locations[prgIndex];
+            // Ensure the location is not occupied
             while (isOccupied(location)) {
                 prgIndex++;
                 location = locations[prgIndex];
@@ -205,42 +221,68 @@ public class BlindStorage {
                 FileOutputStream blockOutputStream = new FileOutputStream("./" + location);
                 blockOutputStream.write(blocks.get(i));
                 blockOutputStream.close();
-                return true;
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
+                return false;
             } catch (IOException e) {
                 e.printStackTrace();
+                return false;
             }
         }
-        return false;
+        // return that we had success
+        return true;
     }
 
     /*
      * Returns true if there is at least 1 block free
      * in the first kappa blocks.
      */
-    private boolean sizef0Success(Integer[] locations) {
-        return true;
+    private boolean sizefOneBlockSuccess(Integer[] kappaLocation) {
+        boolean allGood = false;
+        for (Integer location : kappaLocation) {
+            if (!isOccupied(location)) {
+                allGood = true;
+                break;
+            }
+        }
+        return allGood;
     }
 
     /*
-     * returns true if all the locations are free
+     * returns true if sizef locations are free
+     * The chance of this returning false is suppose to be negligible.
      */
-    private boolean sizefSuccess(Integer[] locations) {
-        return true;
+    private boolean allGood(Integer[] locations, Integer sizef) {
+        boolean allGood = true;
+        Integer numGood = locations.length;
+        for (Integer index : locations) {
+            if (isOccupied(index)) {
+                numGood--;
+                if (numGood < sizef) {
+                    allGood = false;
+                    break;
+                }
+            }
+        }
+        return allGood;
     }
 
     private boolean isOccupied(Integer location) {
-        return false;
+        File file = new File("./" + location);
+        return file.exists();
     }
 
     /*
      * Decrypts a given set of blocks and returns them with headers
      */
-    private List<String> decryptBlocks(List<byte[]> blocks) throws UnsupportedEncodingException {
+    private List<String> decryptBlocks(List<byte[]> blocks) {
         List<String> output = new ArrayList<String>();
         for (byte[] block : blocks) {
-            output.add(new String(enc.decrypt(block), "UTF-8"));
+            try {
+                output.add(new String(enc.decrypt(block), "UTF-8"));
+            } catch (UnsupportedEncodingException ex) {
+                System.out.println(ex.getMessage());
+            }
         }
         return output;
     }
@@ -249,7 +291,7 @@ public class BlindStorage {
     /*
      * Takes a list of blocks and a message id and puts back together the original message
      */
-    private String buildMessage(String[] blocks, String messageId) {
+    private String buildMessage(List<byte[]> blocks, String messageId) {
         return "";
     }
 
@@ -257,40 +299,44 @@ public class BlindStorage {
         System.out.println("Adding file...");
         List<byte[]> chunks = chunk(file);
         System.out.println("Encrypted Length " + chunks.get(0).length);
+
         // Write blocks to file
-        for (int i = 0; i < chunks.size(); i++) {
-            byte[] block = chunks.get(i);
-            try {
-                FileOutputStream blockOutputStream = new FileOutputStream("./" + i);
-                blockOutputStream.write(block);
-                blockOutputStream.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        List<byte[]> encryptedBlocksFromFile = new ArrayList<byte[]>();
-        for (int i = 0; i < chunks.size(); i++) {
-            try {
-                FileInputStream inStream = new FileInputStream("./" + i);
-                byte[] block = new byte[256];
-                if (inStream.read(block) != -1) {
-                    encryptedBlocksFromFile.add(block);
-                }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        try {
-            for (String block : decryptBlocks(encryptedBlocksFromFile)) {
-                System.out.println(block);
-            }
-        } catch (UnsupportedEncodingException ex) {
-            System.out.println(ex.getMessage());
-        }
+//        for (int i = 0; i < chunks.size(); i++) {
+//            byte[] block = chunks.get(i);
+//            try {
+//                FileOutputStream blockOutputStream = new FileOutputStream("./" + i);
+//                blockOutputStream.write(block);
+//                blockOutputStream.close();
+//            } catch (FileNotFoundException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+        Integer[] locations = {0, 1, 2, 3, 4, 5};
+        System.out.println(writeBlocks(chunks, locations));
+
+        // Read Bytes from file
+//        List<byte[]> encryptedBlocksFromFile = new ArrayList<byte[]>();
+//        for (int i = 0; i < chunks.size(); i++) {
+//            try {
+//                FileInputStream inStream = new FileInputStream("./" + i);
+//                byte[] block = new byte[256];
+//                if (inStream.read(block) != -1) {
+//                    encryptedBlocksFromFile.add(block);
+//                }
+//            } catch (FileNotFoundException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+        List<byte[]> encryptedBlocksFromFile = getBlocks(locations);
+//        for (String block : decryptBlocks(encryptedBlocksFromFile)) {
+//            System.out.println(block);
+//        }
+
+
         return true;
     }
 
