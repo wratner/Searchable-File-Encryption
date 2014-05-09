@@ -20,7 +20,7 @@ public class BlindStorage {
     private String key = "illinois2";
     private int kappa = 60; //temp
     private int alpha = 8;
-    private int totalSize = 10;
+    private int totalSize = 100;
     private final String DIR = "./blind/";
     private byte[] nullBlock;
 
@@ -340,85 +340,135 @@ public class BlindStorage {
      * Takes a list of blocks and a message id and puts back together the original message
      */
     private String buildMessage(List<String> blocks, String messageId) {
-		//String decoded;
-		String message = "";
-		int index = 0;
-		int sizef = 0;
-		for (String s : blocks) {
-			if (s.contains(messageId)) {
-				if (Character.isDigit(s.charAt(0))) {
-					if (s.indexOf(":") == 1) {
-						sizef = Character.getNumericValue(s.charAt(0)); //NEED THIS FOR LATER
-					}
-				}
-				index = s.indexOf(";");
-				message = message + s.replace(s.substring(0, index+1), "");
-						
-				System.out.println(message);
-			}
-		}
-		return message;
-	}
+        //String decoded;
+        String message = "";
+        int index = 0;
+        int sizef = 0;
+        for (String s : blocks) {
+            if (s.contains(messageId)) {
+                if (Character.isDigit(s.charAt(0))) {
+                    if (s.indexOf(":") == 1) {
+                        sizef = Character.getNumericValue(s.charAt(0)); //NEED THIS FOR LATER
+                    }
+                }
+                index = s.indexOf(";");
+                message = message + s.replace(s.substring(0, index + 1), "");
+            }
+        }
+        return message;
+    }
+
+    /*
+     * Takes a group of blocks and message id and gets sizef
+     */
+    private int getSizef(List<String> blocks, String messageId) {
+        //String decoded;
+        String message = "";
+        int index = 0;
+        int sizef = 0;
+        for (String s : blocks) {
+            if (s.contains(messageId)) {
+                if (Character.isDigit(s.charAt(0))) {
+                    if (s.indexOf(":") == 1) {
+                        sizef = Character.getNumericValue(s.charAt(0)); //NEED THIS FOR LATER
+                        return sizef;
+                    }
+                }
+                index = s.indexOf(";");
+                message = message + s.replace(s.substring(0, index + 1), "");
+            }
+        }
+        return sizef;
+    }
 
     public boolean addFile(File file) {
         List<byte[]> chunks = chunk(file);
         List<Integer> locations = getLocations(file.getName(), maxSize(chunks.size()));
-        boolean success = writeBlocks(chunks, (Integer[])locations.toArray());
+        Integer[] intLocations = Arrays.copyOf(locations.toArray(), locations.size(), Integer[].class);
+        boolean success = writeBlocks(chunks, intLocations);
         return success;
     }
 
-	public boolean testFile(File file) {
-		System.out.println("Adding file...");
-		List<byte[]> chunks = chunk(file);
-		System.out.println("Encrypted Length " + chunks.get(0).length);
-		String decryptedMessage;
-		// Write blocks to file
-		// for (int i = 0; i < chunks.size(); i++) {
-		// byte[] block = chunks.get(i);
-		// try {
-		// FileOutputStream blockOutputStream = new FileOutputStream("./" + i);
-		// blockOutputStream.write(block);
-		// blockOutputStream.close();
-		// } catch (FileNotFoundException e) {
-		// e.printStackTrace();
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
-		// }
-		Integer[] locations = { 0, 1, 2, 3, 4, 5 };
-		System.out.println(writeBlocks(chunks, locations));
+    public String getFile(String messageId) {
+        // Get first "kappa" locations
+        List<Integer> locations = getLocations(messageId, kappa);
+        Integer[] intLocations = Arrays.copyOf(locations.toArray(), locations.size(), Integer[].class);
+        // Get the first "kappa" blocks
+        // TODO: On client, this has to be network call
+        List<byte[]> blocks = getBlocks(intLocations);
+        List<String> decryptedBlocks = decryptBlocks(blocks);
+        for (byte[] b : blocks) {
+            b = toByteArray(removePadding(toByteList(b)));
+        }
+        int sizef = getSizef(decryptedBlocks, messageId);
+        // See if we got all the blocks in the first go, and if not, get 'em
+        if (maxSize(sizef) != kappa) {
+            locations = getLocations(messageId, maxSize(sizef));
+            intLocations = Arrays.copyOf(locations.toArray(), locations.size(), Integer[].class);
+            blocks = getBlocks(intLocations);
+            for (byte[] b : blocks) {
+                b = toByteArray(removePadding(toByteList(b)));
+            }
+            decryptedBlocks = decryptBlocks(blocks);
+        }
+        String message = buildMessage(decryptedBlocks, messageId);
+        return message;
+    }
 
-		// Read Bytes from file
-		// List<byte[]> encryptedBlocksFromFile = new ArrayList<byte[]>();
-		// for (int i = 0; i < chunks.size(); i++) {
-		// try {
-		// FileInputStream inStream = new FileInputStream("./" + i);
-		// byte[] block = new byte[256];
-		// if (inStream.read(block) != -1) {
-		// encryptedBlocksFromFile.add(block);
-		// }
-		// } catch (FileNotFoundException e) {
-		// e.printStackTrace();
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
-		// }
-		List<byte[]> encryptedBlocksFromFile = getBlocks(locations);
-		for (String block : decryptBlocks(encryptedBlocksFromFile)) {
-			System.out.print(block);
-		}
-		decryptedMessage = buildMessage(decryptBlocks(encryptedBlocksFromFile), file.getName());
-		System.out.println("***********************MESSAGE***********************");
-		System.out.println(decryptedMessage);
-		System.out.println("***********************MESSAGE***********************");
-		return true;
-	}
+    public boolean testFile(File file) {
+        System.out.println("Adding file...");
+        List<byte[]> chunks = chunk(file);
+        System.out.println("Encrypted Length " + chunks.get(0).length);
+        String decryptedMessage;
+        // Write blocks to file
+        // for (int i = 0; i < chunks.size(); i++) {
+        // byte[] block = chunks.get(i);
+        // try {
+        // FileOutputStream blockOutputStream = new FileOutputStream("./" + i);
+        // blockOutputStream.write(block);
+        // blockOutputStream.close();
+        // } catch (FileNotFoundException e) {
+        // e.printStackTrace();
+        // } catch (IOException e) {
+        // e.printStackTrace();
+        // }
+        // }
+        Integer[] locations = {0, 1, 2, 3, 4, 5};
+        System.out.println(writeBlocks(chunks, locations));
+
+        // Read Bytes from file
+        // List<byte[]> encryptedBlocksFromFile = new ArrayList<byte[]>();
+        // for (int i = 0; i < chunks.size(); i++) {
+        // try {
+        // FileInputStream inStream = new FileInputStream("./" + i);
+        // byte[] block = new byte[256];
+        // if (inStream.read(block) != -1) {
+        // encryptedBlocksFromFile.add(block);
+        // }
+        // } catch (FileNotFoundException e) {
+        // e.printStackTrace();
+        // } catch (IOException e) {
+        // e.printStackTrace();
+        // }
+        // }
+        List<byte[]> encryptedBlocksFromFile = getBlocks(locations);
+        for (String block : decryptBlocks(encryptedBlocksFromFile)) {
+            System.out.print(block);
+        }
+        decryptedMessage = buildMessage(decryptBlocks(encryptedBlocksFromFile), file.getName());
+        System.out.println("***********************MESSAGE***********************");
+        System.out.println(decryptedMessage);
+        System.out.println("***********************MESSAGE***********************");
+        return true;
+    }
 
     public static void main(String[] args) {
         System.out.println("Starting...");
         BlindStorage blind = new BlindStorage(256, true);
         File file = new File("./main.xml");
         blind.addFile(file);
+        System.out.println("Getting file...");
+        System.out.println(blind.getFile(file.getName()));
     }
 
 }
