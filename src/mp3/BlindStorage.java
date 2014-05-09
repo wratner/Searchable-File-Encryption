@@ -5,10 +5,7 @@ import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -178,7 +175,7 @@ public class BlindStorage {
      */
     /* NEED TO CHANGE HARDCODED VALUES*/
     private List<Integer> getLocations(String fileName, Integer max) {
-        List<Integer> locations = new ArrayList<Integer>();
+        Set<Integer> locations = new LinkedHashSet<Integer>();
         try {
             final Charset asciiCs = Charset.forName("US-ASCII");
             final Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
@@ -198,7 +195,7 @@ public class BlindStorage {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        return locations;
+        return new ArrayList<Integer>(locations);
     }
 
     /*
