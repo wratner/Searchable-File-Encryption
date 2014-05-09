@@ -1,12 +1,26 @@
 package mp3;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.concurrent.BlockingDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -23,6 +37,12 @@ public class BlindStorage {
     private final int BLOCK_SIZE = 2048;
     private byte[] nullBlock;
     private RandomAccessFile store;
+    public static final String SERVER_IP = "172.16.184.240";// "172.22.152.61";
+	public static final int SERVER_PORT = 8888;
+	public static final String LOOKUP_CMD = "LOOKUP ";
+	public static final String BYE_CMD = "BYE";
+	public static final String DOWNLOAD_CMD = "DOWNLD ";
+	public static final String REPLY_DATA = "REPLY ";
 
     public BlindStorage(Integer blockSize, boolean server) {
 //        this.BLOCK_SIZE = BLOCK_SIZE;
@@ -474,6 +494,35 @@ public class BlindStorage {
         System.out.println(decryptedMessage);
         System.out.println("***********************MESSAGE***********************");
         return true;
+    }
+    
+    public List<byte[]> getRemoteBlockIds (Integer[] blockIds, Socket socket) {
+    	ArrayList<byte[]> blockIdsList = new ArrayList<byte[]>();
+    	for (Integer id : blockIds) {
+    		try {
+				socket = new Socket(SERVER_IP, SERVER_PORT);
+				PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
+				output.println(DOWNLOAD_CMD + id);
+				InputStreamReader inStreamRead = new InputStreamReader(socket.getInputStream());
+				BufferedReader buffRead = new BufferedReader(inStreamRead);
+				String serverOutput = buffRead.readLine();
+				
+				byte[] serverOutputBytes = serverOutput.getBytes();
+				serverOutput = new String(serverOutputBytes, "UTF-8");
+				serverOutput.substring(REPLY_DATA.length());
+				serverOutputBytes = serverOutput.getBytes();
+				
+				blockIdsList.add(serverOutputBytes);
+				socket.close();
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+		return blockIdsList;
     }
 
     public static void main(String[] args) {
