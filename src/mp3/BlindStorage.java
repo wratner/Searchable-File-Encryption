@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.BlockingDeque;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -15,29 +16,39 @@ public class BlindStorage {
     private Integer blockSize;
     private MP3Encryption enc;
     private String key = "illinois2";
-    private int kappa = 60; //temp
+    private int kappa = 25; //temp
     private int alpha = 8;
-    private int totalSize = 100;
+    private int totalSize = 500000;
     private final String DIR = "./blind/";
+    private final int BLOCK_SIZE = 2048;
     private byte[] nullBlock;
+    private RandomAccessFile store;
 
     public BlindStorage(Integer blockSize, boolean server) {
-        this.blockSize = blockSize;
+//        this.BLOCK_SIZE = BLOCK_SIZE;
         enc = new MP3Encryption("illinois");
+        try {
+            store = new RandomAccessFile(DIR + "store.txt", "rw");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
         if (server)
             initBlocks();
     }
 
     private void initBlocks() {
-        nullBlock = new byte[256];
-        for (int i = 0; i < 256; i++) {
+        nullBlock = new byte[BLOCK_SIZE];
+        for (int i = 0; i < BLOCK_SIZE; i++) {
             nullBlock[0] = '\0';
         }
         for (int i = 0; i < totalSize; i++) {
             try {
-                FileOutputStream blockOutputStream = new FileOutputStream(DIR + i);
-                blockOutputStream.write(nullBlock);
-                blockOutputStream.close();
+
+                store.seek(i * BLOCK_SIZE);
+                store.write(nullBlock);
+                //FileOutputStream blockOutputStream = new FileOutputStream(DIR + i);
+                //blockOutputStream.write(nullBlock);
+                //blockOutputStream.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -101,7 +112,7 @@ public class BlindStorage {
      */
     private List<byte[]> createBlocks(List<Byte> inputBytes, String message_id) {
         String header;
-        Integer sizef = ((Double) Math.ceil((double) inputBytes.size() / (double) blockSize)).intValue();
+        Integer sizef = ((Double) Math.ceil((double) inputBytes.size() / (double) BLOCK_SIZE)).intValue();
         int start = 0;
         int stop = inputBytes.size();
         List<byte[]> output = new ArrayList<byte[]>();
@@ -116,7 +127,7 @@ public class BlindStorage {
                 List<Byte> byteList = new ArrayList<Byte>();
                 byteList.addAll(headerBytes);
                 // Take into account the header when getting the parts of the file that we need
-                stop = blockSize - headerBytes.size() + start - 1;
+                stop = BLOCK_SIZE - headerBytes.size() + start - 1;
                 // Make sure that the size isn't past the max
                 if (stop > inputBytes.size()) {
                     stop = inputBytes.size();
@@ -141,8 +152,8 @@ public class BlindStorage {
     }
 
     private List<Byte> addPadding(List<Byte> block) {
-        if (block.size() < blockSize - 1) {
-            for (int i = block.size(); i < blockSize - 1; i++) {
+        if (block.size() < BLOCK_SIZE - 1) {
+            for (int i = block.size(); i < BLOCK_SIZE - 1; i++) {
                 block.add("\0".getBytes()[0]);
             }
             return block;
@@ -207,12 +218,14 @@ public class BlindStorage {
         for (int i = 0; i < blockIds.length; i++) {
             try {
                 if (isOccupied(blockIds[i])) {
-                    FileInputStream inStream = new FileInputStream(DIR + blockIds[i]);
+                    //FileInputStream inStream = new FileInputStream(DIR + blockIds[i]);
                     // Every block is only 256 bytes
-                    byte[] block = new byte[256];
-                    if (inStream.read(block) != -1) {
-                        encryptedBlocksFromFiles.add(block);
-                    }
+                    byte[] block = new byte[BLOCK_SIZE];
+//                    if (inStream.read(block) != -1) {
+//                    }
+                    store.seek(blockIds[i] * BLOCK_SIZE);
+                    store.readFully(block);
+                    encryptedBlocksFromFiles.add(block);
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -248,9 +261,11 @@ public class BlindStorage {
                 location = locations[prgIndex];
             }
             try {
-                FileOutputStream blockOutputStream = new FileOutputStream(DIR + location);
-                blockOutputStream.write(blocks.get(i));
-                blockOutputStream.close();
+                //FileOutputStream blockOutputStream = new FileOutputStream(DIR + location);
+                //blockOutputStream.write(blocks.get(i));
+                //blockOutputStream.close();
+                store.seek(location * BLOCK_SIZE);
+                store.write(blocks.get(i));
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
                 return false;
@@ -300,12 +315,14 @@ public class BlindStorage {
     private boolean isOccupied(Integer location) {
         File file = new File(DIR + location);
         try {
-            FileInputStream inStream = new FileInputStream(DIR + location);
+//            FileInputStream inStream = new FileInputStream(DIR + location);
             // Every block is only 256 bytes
-            byte[] block = new byte[256];
-            if (inStream.read(block) != -1) {
-                // yup, just an empty if...
-            }
+            byte[] block = new byte[BLOCK_SIZE];
+//            if (inStream.read(block) != -1) {
+//                // yup, just an empty if...
+//            }
+            store.seek(location * BLOCK_SIZE);
+            store.readFully(block);
             if (Arrays.equals(block, nullBlock)) {
                 return false;
             }
@@ -461,7 +478,7 @@ public class BlindStorage {
 
     public static void main(String[] args) {
         System.out.println("Starting...");
-        BlindStorage blind = new BlindStorage(256, true);
+        BlindStorage blind = new BlindStorage(2048, true);
         File file = new File("./main.xml");
         blind.addFile(file);
         System.out.println("Getting file...");
