@@ -241,7 +241,8 @@ public class Indexer {
         FileWriter fileWrite;
         MP3Encryption encryption;
         String toWrite;
-
+        String fileName = "";
+        ArrayList<Character> listOfChars = new ArrayList<Character>();
         if (map == null) {
             return false;
         }
@@ -249,15 +250,24 @@ public class Indexer {
         encryption = new MP3Encryption(KEY);
 
         for (String keyword : map.keySet()) {
-            fileWrite = new FileWriter(indexPath);// + encryption.hash(keyword));
-
+        	if (Character.isLetter(keyword.charAt(0))) {
+        			fileName = Character.toLowerCase(keyword.charAt(0)) + "_keyword.txt";
+        	}
+        	else if (Character.isDigit(keyword.charAt(0))) {
+        		fileName = "num_keyword.txt";
+        	}
+        	else {
+        		fileName = "misc_keyword.txt";
+        	}
+            fileWrite = new FileWriter(indexPath + "\\" + fileName, true); //+ encryption.hash(keyword));
+            
             toWrite = keyword + KEYWORD_DELIM;
             for (String messageID : map.get(keyword)) {
                 toWrite += messageID + KEYWORD_DELIM;
             }
             toWrite = toWrite.substring(0, toWrite.length() - 1) + '\n';
 
-            encryption.encrypt(toWrite);
+            //encryption.encrypt(toWrite);
 
             for (char nextChar : toWrite.toCharArray()) {
                 fileWrite.write(nextChar);
