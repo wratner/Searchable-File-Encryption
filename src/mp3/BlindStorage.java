@@ -233,7 +233,7 @@ public class BlindStorage {
      * Returns the blocks Identified by blockIds.
      * This reads from the filesystem.
      */
-    private List<byte[]> getBlocks(Integer[] blockIds) {
+    public List<byte[]> getBlocks(Integer[] blockIds) {
         List<byte[]> encryptedBlocksFromFiles = new ArrayList<byte[]>();
         for (int i = 0; i < blockIds.length; i++) {
             try {
@@ -440,6 +440,32 @@ public class BlindStorage {
             locations = getLocations(messageId, maxSize(sizef));
             intLocations = Arrays.copyOf(locations.toArray(), locations.size(), Integer[].class);
             blocks = getBlocks(intLocations);
+            for (byte[] b : blocks) {
+                b = toByteArray(removePadding(toByteList(b)));
+            }
+            decryptedBlocks = decryptBlocks(blocks);
+        }
+        String message = buildMessage(decryptedBlocks, messageId);
+        return message;
+    }
+
+        public String getRemoteFile(String messageId, Socket socket) {
+        // Get first "kappa" locations
+        List<Integer> locations = getLocations(messageId, kappa);
+        Integer[] intLocations = Arrays.copyOf(locations.toArray(), locations.size(), Integer[].class);
+        // Get the first "kappa" blocks
+        // TODO: On client, this has to be network call
+        List<byte[]> blocks = getRemoteBlockIds(intLocations, socket);
+        List<String> decryptedBlocks = decryptBlocks(blocks);
+        for (byte[] b : blocks) {
+            b = toByteArray(removePadding(toByteList(b)));
+        }
+        int sizef = getSizef(decryptedBlocks, messageId);
+        // See if we got all the blocks in the first go, and if not, get 'em
+        if (maxSize(sizef) != kappa) {
+            locations = getLocations(messageId, maxSize(sizef));
+            intLocations = Arrays.copyOf(locations.toArray(), locations.size(), Integer[].class);
+            blocks = getRemoteBlockIds(intLocations, socket);
             for (byte[] b : blocks) {
                 b = toByteArray(removePadding(toByteList(b)));
             }
