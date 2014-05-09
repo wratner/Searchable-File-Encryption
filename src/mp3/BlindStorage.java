@@ -44,15 +44,16 @@ public class BlindStorage {
 	public static final String DOWNLOAD_CMD = "DOWNLD ";
 	public static final String REPLY_DATA = "REPLY ";
 
-    public BlindStorage(Integer blockSize, boolean server) {
+    public BlindStorage(Integer blockSize, boolean create, boolean phone) {
 //        this.BLOCK_SIZE = BLOCK_SIZE;
         enc = new MP3Encryption("illinois");
         try {
-            store = new RandomAccessFile(DIR + "store.txt", "rw");
+            if (!phone)
+                store = new RandomAccessFile(DIR + "store.txt", "rw");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        if (server)
+        if (create)
             initBlocks();
     }
 
@@ -553,7 +554,7 @@ public class BlindStorage {
 
     public static void main(String[] args) {
         System.out.println("Starting...");
-        BlindStorage blind = new BlindStorage(2048, true);
+        BlindStorage blind = new BlindStorage(2048, true, false);
         File file = new File("./main.xml");
         blind.addFile(file);
         System.out.println("Getting file...");
