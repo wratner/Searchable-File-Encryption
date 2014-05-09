@@ -177,7 +177,7 @@ public class BlindStorage {
      * QUESTION: How to pick the array size? (How many numbers do I generate?)
      */
     /* NEED TO CHANGE HARDCODED VALUES*/
-    private List<Integer> getLocations(String fileName) {
+    private List<Integer> getLocations(String fileName, Integer max) {
         List<Integer> locations = new ArrayList<Integer>();
         try {
             final Charset asciiCs = Charset.forName("US-ASCII");
@@ -187,7 +187,7 @@ public class BlindStorage {
             final byte[] mac_data = sha256_HMAC.doFinal(asciiCs.encode(fileName).array());
             int seed = new BigInteger(mac_data).intValue();
             Random pseudoGenerator = new Random(seed);
-            for (int i = 0; i < kappa; i++) {
+            for (int i = 0; i < max; i++) {
                 locations.add(pseudoGenerator.nextInt(totalSize));
             }
 
@@ -360,7 +360,14 @@ public class BlindStorage {
 		return message;
 	}
 
-	public boolean addFile(File file) {
+    public boolean addFile(File file) {
+        List<byte[]> chunks = chunk(file);
+        List<Integer> locations = getLocations(file.getName(), maxSize(chunks.size()));
+        boolean success = writeBlocks(chunks, (Integer[])locations.toArray());
+        return success;
+    }
+
+	public boolean testFile(File file) {
 		System.out.println("Adding file...");
 		List<byte[]> chunks = chunk(file);
 		System.out.println("Encrypted Length " + chunks.get(0).length);
