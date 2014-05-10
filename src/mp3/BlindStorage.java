@@ -523,24 +523,30 @@ public class BlindStorage {
         return true;
     }
 
-    public List<byte[]> getRemoteBlockIds (Integer[] blockIds, Socket socket) {
-    	ArrayList<byte[]> blockIdsList = new ArrayList<byte[]>();
-    	for (Integer id : blockIds) {
-    		try {
-				socket = new Socket(SERVER_IP, SERVER_PORT);
-				PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
+    public List<byte[]> getRemoteBlockIds(Integer[] blockIds, Socket socket) {
+		List<byte[]> blockIdsList = new ArrayList<byte[]>();
+		for (Integer id : blockIds) {
+			try {
+
+				PrintWriter output = new PrintWriter(socket.getOutputStream(),
+						true);
 				output.println(DOWNLOAD_CMD + id);
-				InputStreamReader inStreamRead = new InputStreamReader(socket.getInputStream());
+				InputStreamReader inStreamRead = new InputStreamReader(
+						socket.getInputStream());
 				BufferedReader buffRead = new BufferedReader(inStreamRead);
 				String serverOutput = buffRead.readLine();
-
-				byte[] serverOutputBytes = serverOutput.getBytes();
-				serverOutput = new String(serverOutputBytes, "UTF-8");
-				serverOutput.substring(REPLY_DATA.length());
-				serverOutputBytes = serverOutput.getBytes();
-
-				blockIdsList.add(serverOutputBytes);
-				socket.close();
+				
+				byte[] serverOutputBytes = enc.hexStringToByteArray(serverOutput);
+				if (serverOutput.equals("")) {
+					output.close();
+					socket = new Socket(SERVER_IP, SERVER_PORT);
+					output = new PrintWriter(socket.getOutputStream(), true);
+				} else {
+					blockIdsList.add(serverOutputBytes);
+					output.close();
+					socket = new Socket(SERVER_IP, SERVER_PORT);
+					output = new PrintWriter(socket.getOutputStream(), true);
+				}
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -548,9 +554,9 @@ public class BlindStorage {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-    	}
+		}
 		return blockIdsList;
-    }
+	}
 
     public static void main(String[] args) {
         System.out.println("Starting...");
