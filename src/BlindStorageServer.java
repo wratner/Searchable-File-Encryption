@@ -4,6 +4,7 @@
 //package mp3;
 
 import mp3.BlindStorage;
+import mp3.MP3Encryption;
 
 import java.io.*;
 import java.io.BufferedReader;
@@ -56,8 +57,8 @@ public class BlindStorageServer {
                     while (scanner.hasNext()) {
                         builder.append(scanner.nextLine());
                     }
-                    System.out.println(REPLY_DATA+builder.toString()+"\n"+"\n");
-                    out.println(REPLY_DATA+builder.toString()+"\n"+"\n");
+                    System.out.println(REPLY_DATA + builder.toString() + "\n" + "\n");
+                    out.println(REPLY_DATA + builder.toString() + "\n" + "\n");
                     out.flush();
                 } catch (FileNotFoundException e) {
                     out.println(e.getMessage());
@@ -72,10 +73,28 @@ public class BlindStorageServer {
         // NOTE:  The blockIndex can be in any format you like
         // Lookup the block-index in the encrypted documents and return it to the clients
         // out.println("REPLY "+contents);
+        System.out.println("In download function");
         Integer id = new Integer(blockIndex);
-        BlindStorage store = new BlindStorage(2048, false);
-        List<byte[]> blocks = store.getBlocks(new Integer[id]);
-        out.println("REPLY " + blocks.get(0));
+        System.out.println("Location: " + id);
+        BlindStorage store = new BlindStorage(2048, false, false);
+        Integer[] ids = new Integer[1];
+        ids[0] = id;
+        List<byte[]> blocks = store.getBlocks(ids);
+        System.out.println(blocks.size());
+        System.out.println("Got bytes..");
+        System.out.println("Blocks:");
+        try {
+            if (blocks.size() == 0) {
+                out.println("");
+            } else {
+                MP3Encryption enc = new MP3Encryption("blah");
+                String temp = new String(blocks.get(0), "UTF-8");
+                temp = enc.bytesToHex(blocks.get(0));
+                out.println(temp);
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         out.flush();
     }
 
@@ -91,13 +110,17 @@ public class BlindStorageServer {
         // parameters you may need
 
         try {
-            InetAddress addrr = InetAddress.getByName("172.16.184.240");
+            //InetAddress addrr = InetAddress.getByName("172.16.184.240");
+            InetAddress addrr = InetAddress.getByName("192.168.1.189");
             serverSocket = new ServerSocket(SERVER_PORT, 5, addrr);  //Server socket
             if (serverSocket.isBound()) {
-               System.out.println("Server port bound: "+  serverSocket.getLocalSocketAddress());
+                System.out.println("Server port bound: " + serverSocket.getLocalSocketAddress());
             }
         } catch (IOException e) {
             System.err.println("ERROR: Could not listen on server port: " + SERVER_PORT);
+            System.err.println(e.getMessage());
+            System.err.println(e.getCause());
+            System.err.println(e.getStackTrace());
             return;
         }
         while (true) {
