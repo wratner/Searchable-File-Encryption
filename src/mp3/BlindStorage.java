@@ -38,11 +38,11 @@ public class BlindStorage {
     private byte[] nullBlock;
     private RandomAccessFile store;
     public static final String SERVER_IP = "172.16.184.240";// "172.22.152.61";
-	public static final int SERVER_PORT = 8888;
-	public static final String LOOKUP_CMD = "LOOKUP ";
-	public static final String BYE_CMD = "BYE";
-	public static final String DOWNLOAD_CMD = "DOWNLD ";
-	public static final String REPLY_DATA = "REPLY ";
+    public static final int SERVER_PORT = 8888;
+    public static final String LOOKUP_CMD = "LOOKUP ";
+    public static final String BYE_CMD = "BYE";
+    public static final String DOWNLOAD_CMD = "DOWNLD ";
+    public static final String REPLY_DATA = "REPLY ";
 
     public BlindStorage(Integer blockSize, boolean create, boolean phone) {
 //        this.BLOCK_SIZE = BLOCK_SIZE;
@@ -53,15 +53,18 @@ public class BlindStorage {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        if (create)
-            initBlocks();
-    }
-
-    private void initBlocks() {
         nullBlock = new byte[BLOCK_SIZE];
         for (int i = 0; i < BLOCK_SIZE; i++) {
             nullBlock[0] = '\0';
         }
+        if (create) {
+            initBlocks();
+        }
+
+    }
+
+    private void initBlocks() {
+
         for (int i = 0; i < totalSize; i++) {
             try {
 
@@ -239,6 +242,7 @@ public class BlindStorage {
         for (int i = 0; i < blockIds.length; i++) {
             try {
                 if (isOccupied(blockIds[i])) {
+//                if (true) {
                     //FileInputStream inStream = new FileInputStream(DIR + blockIds[i]);
                     // Every block is only 256 bytes
                     byte[] block = new byte[BLOCK_SIZE];
@@ -334,7 +338,7 @@ public class BlindStorage {
     }
 
     private boolean isOccupied(Integer location) {
-        File file = new File(DIR + location);
+        //File file = new File(DIR + location);
         try {
 //            FileInputStream inStream = new FileInputStream(DIR + location);
             // Every block is only 256 bytes
@@ -450,7 +454,7 @@ public class BlindStorage {
         return message;
     }
 
-        public String getRemoteFile(String messageId, Socket socket) {
+    public String getRemoteFile(String messageId, Socket socket) {
         // Get first "kappa" locations
         List<Integer> locations = getLocations(messageId, kappa);
         Integer[] intLocations = Arrays.copyOf(locations.toArray(), locations.size(), Integer[].class);
@@ -522,7 +526,7 @@ public class BlindStorage {
         System.out.println("***********************MESSAGE***********************");
         return true;
     }
-    
+
     public List<byte[]> getRemoteBlockIds (Integer[] blockIds, Socket socket) {
     	ArrayList<byte[]> blockIdsList = new ArrayList<byte[]>();
     	for (Integer id : blockIds) {
@@ -533,12 +537,12 @@ public class BlindStorage {
 				InputStreamReader inStreamRead = new InputStreamReader(socket.getInputStream());
 				BufferedReader buffRead = new BufferedReader(inStreamRead);
 				String serverOutput = buffRead.readLine();
-				
+
 				byte[] serverOutputBytes = serverOutput.getBytes();
 				serverOutput = new String(serverOutputBytes, "UTF-8");
 				serverOutput.substring(REPLY_DATA.length());
 				serverOutputBytes = serverOutput.getBytes();
-				
+
 				blockIdsList.add(serverOutputBytes);
 				socket.close();
 			} catch (UnknownHostException e) {
