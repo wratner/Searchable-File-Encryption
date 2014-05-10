@@ -32,6 +32,7 @@ public class BlindStorageServer {
     public static final String BYE_CMD = "BYE";
     public static final String DOWNLOAD_CMD = "DOWNLD ";
     public static final String REPLY_DATA = "REPLY ";
+    public static int numBytesSent = 0;
 
     public static void Lookup(String documentId, PrintWriter out) {
         // THIS SHOULD BE IMPLEMENTED FOR PART-1
@@ -73,7 +74,7 @@ public class BlindStorageServer {
         // NOTE:  The blockIndex can be in any format you like
         // Lookup the block-index in the encrypted documents and return it to the clients
         // out.println("REPLY "+contents);
-        System.out.println("In download function");
+//        System.out.println("In download function");
         Integer id = new Integer(blockIndex);
         System.out.println("Location: " + id);
         BlindStorage store = new BlindStorage(2048, false, false);
@@ -81,8 +82,8 @@ public class BlindStorageServer {
         ids[0] = id;
         List<byte[]> blocks = store.getBlocks(ids);
         System.out.println(blocks.size());
-        System.out.println("Got bytes..");
-        System.out.println("Blocks:");
+//        System.out.println("Got bytes..");
+//        System.out.println("Blocks:");
         try {
             if (blocks.size() == 0) {
                 out.println("");
@@ -90,8 +91,10 @@ public class BlindStorageServer {
                 MP3Encryption enc = new MP3Encryption("blah");
                 String temp = new String(blocks.get(0), "UTF-8");
                 temp = enc.bytesToHex(blocks.get(0));
+                numBytesSent += temp.getBytes().length;
                 out.println(temp);
             }
+            System.out.println("Number of Bytes Sent: " + numBytesSent);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

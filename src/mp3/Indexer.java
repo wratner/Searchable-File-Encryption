@@ -22,55 +22,88 @@ public class Indexer {
      * Returns:
      * Map with added index data.
      */
-    public static Map<String, Set<String>> indexMessage(Map<String, Set<String>> map, String messagePath, String messageID, String separators, List<String> stopwords) throws IOException {
-        Set<String> keywords;
 
-        FileInputStream fileStream;
-        DataInputStream dataIn;
-        BufferedReader buffRead;
 
-        StringTokenizer tokenizer;
-        String messageLine;
-        String newWord;
+    static class IndexSingleMessageThread extends Thread {
+        private Map<String, Set<String>> classMap;
 
-        Set<String> messages;
+        public Map<String, Set<String>> getOutputMap() {
+            return outputMap;
+        }
 
-        keywords = new HashSet<String>();
+        private Map<String, Set<String>> outputMap;
+        private String classMessagePath;
+        private String classMessageId;
+        private String classSeparators;
+        private List<String> classStopwords;
 
-        // PARSE EACH WORD OF THE MESSAGE
-        // IF THE WORD IS NOT A STOPWORD, ADD IT TO THE SET OF KEYWORDS
-        try {
-            fileStream = new FileInputStream(messagePath);
-            dataIn = new DataInputStream(fileStream);
-            buffRead = new BufferedReader(new InputStreamReader(dataIn));
-            while ((messageLine = buffRead.readLine()) != null) {
-                tokenizer = new StringTokenizer(messageLine, separators);
-                while (tokenizer.hasMoreTokens()) {
-                    newWord = tokenizer.nextToken();
-                    if (!stopwords.contains(newWord)) {
-                        keywords.add(newWord);
+        IndexSingleMessageThread(Map<String, Set<String>> map, String messagePath, String messageID, String separators, List<String> stopwords) {
+            classMap = map;
+            classMessagePath = messagePath;
+            classMessageId = messageID;
+            classSeparators = separators;
+            classStopwords = stopwords;
+        }
+
+        public Map<String, Set<String>> indexMessage(Map<String, Set<String>> map, String messagePath, String messageID, String separators, List<String> stopwords) throws IOException {
+            Set<String> keywords;
+
+            FileInputStream fileStream;
+            DataInputStream dataIn;
+            BufferedReader buffRead;
+
+            StringTokenizer tokenizer;
+            String messageLine;
+            String newWord;
+
+            Set<String> messages;
+
+            keywords = new HashSet<String>();
+
+            // PARSE EACH WORD OF THE MESSAGE
+            // IF THE WORD IS NOT A STOPWORD, ADD IT TO THE SET OF KEYWORDS
+            try {
+                fileStream = new FileInputStream(messagePath);
+                dataIn = new DataInputStream(fileStream);
+                buffRead = new BufferedReader(new InputStreamReader(dataIn));
+                while ((messageLine = buffRead.readLine()) != null) {
+                    tokenizer = new StringTokenizer(messageLine, separators);
+                    while (tokenizer.hasMoreTokens()) {
+                        newWord = tokenizer.nextToken();
+                        if (!stopwords.contains(newWord)) {
+                            keywords.add(newWord);
+                        }
                     }
                 }
+                dataIn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            dataIn.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            // FOR EACH KEYWORD, ADD THIS MESSAGE TO ITS SET OF MESSAGES
+            if (map == null) {
+                map = new HashMap<String, Set<String>>();
+            }
+            for (String keyword : keywords) {
+                messages = map.get(keyword);
+                if (messages == null) {
+                    messages = new HashSet<String>();
+                }
+                messages.add(messageID);
+                map.put(keyword, messages);
+            }
+
+            return map;
         }
 
-        // FOR EACH KEYWORD, ADD THIS MESSAGE TO ITS SET OF MESSAGES
-        if (map == null) {
-            map = new HashMap<String, Set<String>>();
-        }
-        for (String keyword : keywords) {
-            messages = map.get(keyword);
-            if (messages == null) {
-                messages = new HashSet<String>();
+        public void run() {
+            try {
+                outputMap = indexMessage(classMap, classMessagePath, classMessageId, classSeparators, classStopwords);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            messages.add(messageID);
-            map.put(keyword, messages);
         }
 
-        return map;
     }
 
     /*
@@ -136,10 +169,54 @@ public class Indexer {
         }
 
         // INDEX MESSAGES
+        List<IndexSingleMessageThread> threads = new ArrayList<IndexSingleMessageThread>();
         for (int i = 0; i < messagePaths.size(); i++) {
-            map = indexMessage(map, messagePaths.get(i), messageIDs.get(i), separators, stopwords);
+            try {
+                IndexSingleMessageThread msgThred = new IndexSingleMessageThread(map, messagePaths.get(i), messageIDs.get(i), separators, stopwords);
+                threads.add(msgThred);
+                checkAndRunThreads(threads);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            map = checkAndMergeThreads(threads);
+        }
+        while(threads.size() > 0) {
+            checkAndRunThreads(threads);
+            map = checkAndMergeThreads(threads);
         }
         return map;
+    }
+
+    private static void checkAndRunThreads(List<IndexSingleMessageThread> threads) {
+        if (threads.size() < 20) {
+            // Find threads that are new and try and start them
+            for (int t = 0; t < threads.size(); t++) {
+                IndexSingleMessageThread thread = threads.get(t);
+                if (thread.getState() == Thread.State.NEW) {
+                    thread.run();
+                }
+            }
+        } else {
+            try {
+                Thread.sleep(0);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static Map<String, Set<String>> checkAndMergeThreads(List<IndexSingleMessageThread> threads) {
+        Map<String, Set<String>> outputMap = new HashMap<String, Set<String>>();
+        // Iterate through the threads and get the output from the finished ones and then remove them from the list
+        for (int t = 0; t < threads.size(); t++) {
+            IndexSingleMessageThread thread = threads.get(t);
+            if (thread.getState() == Thread.State.TERMINATED) {
+                outputMap = thread.getOutputMap();
+                threads.remove(t);
+                outputMap = mergeMaps(outputMap, outputMap);
+            }
+        }
+        return outputMap;
     }
 
     /*
@@ -249,17 +326,19 @@ public class Indexer {
         encryption = new MP3Encryption(KEY);
 
         for (String keyword : map.keySet()) {
-            if (Character.isLetter(keyword.charAt(0))) {
-                    fileName = Character.toLowerCase(keyword.charAt(0)) + "_keyword.txt";
-            }
-            else if (Character.isDigit(keyword.charAt(0))) {
-                fileName = "num_keyword.txt";
-            }
-            else {
-                fileName = "misc_keyword.txt";
-            }
-            fileWrite = new FileWriter(indexPath + "\\" + fileName, true); //+ encryption.hash(keyword));
-            
+
+//        	if (Character.isLetter(keyword.charAt(0))) {
+//        			fileName = Character.toLowerCase(keyword.charAt(0)) + "_keyword.txt";
+//        	}
+//        	else if (Character.isDigit(keyword.charAt(0))) {
+//        		fileName = "num_keyword.txt";
+//        	}
+//        	else {
+//        		fileName = "misc_keyword.txt";
+//        	}
+//            fileWrite = new FileWriter(indexPath + "\\" + fileName, true); //+ encryption.hash(keyword));
+            fileWrite = new FileWriter(indexPath + "\\" + keyword, true); //+ encryption.hash(keyword));
+
             toWrite = keyword + KEYWORD_DELIM;
             for (String messageID : map.get(keyword)) {
                 toWrite += messageID + KEYWORD_DELIM;
@@ -277,20 +356,18 @@ public class Indexer {
 
         return true;
     }
-    
-    public static Map<String, Set<String>> mergeMaps (Map<String, Set<String>> map1, Map<String, Set<String>> map2) {
+
+    public static Map<String, Set<String>> mergeMaps(Map<String, Set<String>> map1, Map<String, Set<String>> map2) {
         Set<Map.Entry<String, Set<String>>> entries = map1.entrySet();
-        for (Map.Entry<String, Set<String>> entry : entries ) {
+        for (Map.Entry<String, Set<String>> entry : entries) {
             Set<String> map2Value = map2.get(entry.getKey());
             if (map2Value == null) {
                 map2.put(entry.getKey(), entry.getValue());
-            }
-            else {
+            } else {
                 map2Value.addAll(entry.getValue());
             }
         }
         return map2;
     }
-
 
 }
