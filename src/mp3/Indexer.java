@@ -249,15 +249,15 @@ public class Indexer {
         encryption = new MP3Encryption(KEY);
 
         for (String keyword : map.keySet()) {
-        	if (Character.isLetter(keyword.charAt(0))) {
-        			fileName = Character.toLowerCase(keyword.charAt(0)) + "_keyword.txt";
-        	}
-        	else if (Character.isDigit(keyword.charAt(0))) {
-        		fileName = "num_keyword.txt";
-        	}
-        	else {
-        		fileName = "misc_keyword.txt";
-        	}
+            if (Character.isLetter(keyword.charAt(0))) {
+                    fileName = Character.toLowerCase(keyword.charAt(0)) + "_keyword.txt";
+            }
+            else if (Character.isDigit(keyword.charAt(0))) {
+                fileName = "num_keyword.txt";
+            }
+            else {
+                fileName = "misc_keyword.txt";
+            }
             fileWrite = new FileWriter(indexPath + "\\" + fileName, true); //+ encryption.hash(keyword));
             
             toWrite = keyword + KEYWORD_DELIM;
@@ -278,6 +278,19 @@ public class Indexer {
         return true;
     }
     
+    public static Map<String, Set<String>> mergeMaps (Map<String, Set<String>> map1, Map<String, Set<String>> map2) {
+        Set<Map.Entry<String, Set<String>>> entries = map1.entrySet();
+        for (Map.Entry<String, Set<String>> entry : entries ) {
+            Set<String> map2Value = map2.get(entry.getKey());
+            if (map2Value == null) {
+                map2.put(entry.getKey(), entry.getValue());
+            }
+            else {
+                map2Value.addAll(entry.getValue());
+            }
+        }
+        return map2;
+    }
 
 
 }
