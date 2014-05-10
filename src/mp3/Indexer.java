@@ -242,7 +242,6 @@ public class Indexer {
         MP3Encryption encryption;
         String toWrite;
         String fileName = "";
-        ArrayList<Character> listOfChars = new ArrayList<Character>();
         if (map == null) {
             return false;
         }
@@ -278,5 +277,7 @@ public class Indexer {
 
         return true;
     }
+    
+
 
 }
