@@ -40,7 +40,7 @@ public class MP3Encryption {
     private Key key;
     IvParameterSpec ivspec;
 
-    MP3Encryption(String keyString) {
+    public MP3Encryption(String keyString) {
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
