@@ -58,7 +58,16 @@ public class BlindStorageServer {
                     while (scanner.hasNext()) {
                         builder.append(scanner.nextLine());
                     }
-                    System.out.println(REPLY_DATA + builder.toString() + "\n" + "\n");
+//                    System.out.println(REPLY_DATA + builder.toString() + "\n" + "\n");
+//                    String temp = builder.toString();
+//                    MP3Encryption enc = new MP3Encryption("illinois");
+//                    byte[] tempBytes = enc.decrypt(enc.hexStringToByteArray(temp));
+//                    try {
+//                        String tempOutput = new String(tempBytes, "UTF-8");
+//                        System.out.println(tempOutput);
+//                    } catch (UnsupportedEncodingException e) {
+//                        e.printStackTrace();
+//                    }
                     out.println(REPLY_DATA + builder.toString() + "\n" + "\n");
                     out.flush();
                 } catch (FileNotFoundException e) {
