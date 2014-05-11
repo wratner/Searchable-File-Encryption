@@ -3,3 +3,4 @@
 .project
 Searchable-File-Encryption.iml
 blind/store.txt
+EncryptedFiles/*
