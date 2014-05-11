@@ -77,27 +77,21 @@ public class BlindStorageServer {
 //        System.out.println("In download function");
         Integer id = new Integer(blockIndex);
         System.out.println("Location: " + id);
-        BlindStorage store = new BlindStorage(2048, false, false);
+        BlindStorage store = new BlindStorage(2048, false, false, "");
         Integer[] ids = new Integer[1];
         ids[0] = id;
         List<byte[]> blocks = store.getBlocks(ids);
         System.out.println(blocks.size());
 //        System.out.println("Got bytes..");
 //        System.out.println("Blocks:");
-        try {
-            if (blocks.size() == 0) {
-                out.println("");
-            } else {
-                MP3Encryption enc = new MP3Encryption("blah");
-                String temp = new String(blocks.get(0), "UTF-8");
-                temp = enc.bytesToHex(blocks.get(0));
-                numBytesSent += temp.getBytes().length;
-                out.println(temp);
-            }
-            System.out.println("Number of Bytes Sent: " + numBytesSent);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        if (blocks.size() == 0) {
+            out.println("");
+        } else {
+            String temp = MP3Encryption.bytesToHex(blocks.get(0));
+            numBytesSent += temp.getBytes().length;
+            out.println(temp);
         }
+        System.out.println("Number of Bytes Sent: " + numBytesSent);
         out.flush();
     }
 

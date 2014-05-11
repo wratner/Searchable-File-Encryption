@@ -7,7 +7,11 @@ import java.io.*;
 
 public class Indexer {
     private static char KEYWORD_DELIM = ' ';
-    private static String KEY = "illinois";
+    private static String KEY;
+
+    public Indexer(String key) {
+        KEY = key;
+    }
 
     /*
      * Indexes a single message into a mapping of keywords to sets of messages,
@@ -354,7 +358,6 @@ public class Indexer {
 //        		fileName = "misc_keyword.txt";
 //        	}
 //            fileWrite = new FileWriter(indexPath + "\\" + fileName, true); //+ encryption.hash(keyword));
-            MP3Encryption enc = new MP3Encryption("illinois");
             String keywordHash = getHash(keyword);
             File file = new File(indexPath + "\\" + keywordHash);
             if (file.exists()) {

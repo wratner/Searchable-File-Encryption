@@ -29,7 +29,7 @@ public class BlindStorage {
 
     private Integer blockSize;
     private MP3Encryption enc;
-    private String key = "illinois2";
+    private String key;
     private int kappa = 25; //temp
     private int alpha = 8;
     private int totalSize = 80000;
@@ -50,10 +50,11 @@ public class BlindStorage {
 
     private int filesAdded;
 
-    public BlindStorage(Integer blockSize, boolean create, boolean phone) {
+    public BlindStorage(Integer blockSize, boolean create, boolean phone, String key) {
         filesAdded = 0;
 //        this.BLOCK_SIZE = BLOCK_SIZE;
-        enc = new MP3Encryption("illinois");
+        enc = new MP3Encryption(key);
+        this.key = key + "2";
         try {
             if (!phone)
                 store = new RandomAccessFile(DIR + "store.txt", "rw");
@@ -571,7 +572,7 @@ public class BlindStorage {
 
     public static void main(String[] args) {
         System.out.println("Starting...");
-        BlindStorage blind = new BlindStorage(2048, false, false);
+        BlindStorage blind = new BlindStorage(2048, false, false, "illinois");
 //        File file = new File("./main.xml");
 //        blind.addFile(file);
         System.out.println("Getting file...");

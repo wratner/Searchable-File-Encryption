@@ -304,7 +304,7 @@ public class ClientActivity extends Activity {
 																	// from the
 																	// textfield
 				textField.setText(""); // Reset the text field to blank
-				blind = new BlindStorage(2048, false, true);
+				blind = new BlindStorage(2048, false, true, KEY);
 				
 				try {
 					client = new Socket(SERVER_IP, SERVER_PORT); // connect to

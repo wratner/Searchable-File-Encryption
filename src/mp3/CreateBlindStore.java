@@ -7,12 +7,12 @@ import java.io.File;
  */
 public class CreateBlindStore {
     public static void main(String[] args) {
-        addFilesFromDirectory(args[0]);
+        addFilesFromDirectory(args[0], args[1]);
 //        storage.addFile()
     }
 
-    public static void addFilesFromDirectory(String directory) {
-        BlindStorage storage = new BlindStorage(2048, true, false);
+    public static void addFilesFromDirectory(String directory, String key) {
+        BlindStorage storage = new BlindStorage(2048, true, false, key);
         String datasetDirectory = directory;
         File file = new File( datasetDirectory);
         String[] subDirs = file.list();

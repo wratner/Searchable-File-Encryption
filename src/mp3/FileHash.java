@@ -167,7 +167,8 @@ public class FileHash {
 		System.out.println(dirList);
 
 		try {
-			Indexer.mapToIndexFiles(Indexer.indexMessages(null, dirList,
+            Indexer indexer = new Indexer(key);
+			indexer.mapToIndexFiles(indexer.indexMessages(null, dirList,
 					fileList, "D:\\Users\\Read\\Documents\\GitHub\\Searchable-File-Encryption\\seperators.txt",
 					"D:\\Users\\Read\\Documents\\GitHub\\Searchable-File-Encryption\\stopwords.txt"), dirLoc);
 		} catch (IOException e) { // TODO Auto-generated catch block
