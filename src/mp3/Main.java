@@ -8,7 +8,8 @@ public class Main {
         //This needs to be an argument ***
     	String name = args[0];
     	String key = args[1];
-		new FileHash(name,key);
+        String versionNum = args[2];
+		new FileHash(name,key, versionNum);
     }
 
 /*    public static void testPadding() {
