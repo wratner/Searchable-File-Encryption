@@ -17,7 +17,7 @@ public class FileHash {
 
 	static int spc_count = -1;
 	// CHANGE TO DIRECTORY YOU WANT ENCRYPTED FILES *******
-	static String dirLoc = "D:\\temp_CS463\\MP3_small" + "\\";
+	static String dirLoc = "D:\\Users\\Read\\Documents\\GitHub\\MP3_small" + "\\";
 	static String dirName = "";
 	static String bFileName = "";
 	static MP3Encryption enc = null;
@@ -168,8 +168,8 @@ public class FileHash {
 
 		try {
 			Indexer.mapToIndexFiles(Indexer.indexMessages(null, dirList,
-					fileList, "D:\\temp_CS463\\seperators.txt",
-					"D:\\temp_CS463\\stopwords.txt"), dirLoc);
+					fileList, "D:\\Users\\Read\\Documents\\GitHub\\Searchable-File-Encryption\\seperators.txt",
+					"D:\\Users\\Read\\Documents\\GitHub\\Searchable-File-Encryption\\stopwords.txt"), dirLoc);
 		} catch (IOException e) { // TODO Auto-generated catch block
 			e.printStackTrace();
 		}

@@ -1,5 +1,7 @@
 package mp3;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.io.*;
 
@@ -37,15 +39,22 @@ public class Indexer {
         private String classSeparators;
         private List<String> classStopwords;
 
+        public boolean isDone() {
+            return done;
+        }
+
+        private boolean done;
+
         IndexSingleMessageThread(Map<String, Set<String>> map, String messagePath, String messageID, String separators, List<String> stopwords) {
             classMap = map;
             classMessagePath = messagePath;
             classMessageId = messageID;
             classSeparators = separators;
             classStopwords = stopwords;
+            done = false;
         }
 
-        public Map<String, Set<String>> indexMessage(Map<String, Set<String>> map, String messagePath, String messageID, String separators, List<String> stopwords) throws IOException {
+        public static Map<String, Set<String>> indexMessage(Map<String, Set<String>> map, String messagePath, String messageID, String separators, List<String> stopwords) throws IOException {
             Set<String> keywords;
 
             FileInputStream fileStream;
@@ -99,6 +108,7 @@ public class Indexer {
         public void run() {
             try {
                 outputMap = indexMessage(classMap, classMessagePath, classMessageId, classSeparators, classStopwords);
+                done = true;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -169,26 +179,30 @@ public class Indexer {
         }
 
         // INDEX MESSAGES
-        List<IndexSingleMessageThread> threads = new ArrayList<IndexSingleMessageThread>();
+//        List<IndexSingleMessageThread> threads = new ArrayList<IndexSingleMessageThread>();
         for (int i = 0; i < messagePaths.size(); i++) {
             try {
-                IndexSingleMessageThread msgThred = new IndexSingleMessageThread(map, messagePaths.get(i), messageIDs.get(i), separators, stopwords);
-                threads.add(msgThred);
-                checkAndRunThreads(threads);
+//                IndexSingleMessageThread msgThred = new IndexSingleMessageThread(map, messagePaths.get(i), messageIDs.get(i), separators, stopwords);
+//                threads.add(msgThred);
+//                checkAndRunThreads(threads);
+                if (i == 2500) {
+                    System.out.println("Half way there!");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            map = checkAndMergeThreads(threads);
+//            map = checkAndMergeThreads(threads, 150);
+            map = IndexSingleMessageThread.indexMessage(map, messagePaths.get(i), messageIDs.get(i), separators, stopwords);
         }
-        while(threads.size() > 0) {
-            checkAndRunThreads(threads);
-            map = checkAndMergeThreads(threads);
-        }
+//        while(threads.size() > 0) {
+//            checkAndRunThreads(threads);
+//            map = checkAndMergeThreads(threads, 0);
+//        }
         return map;
     }
 
     private static void checkAndRunThreads(List<IndexSingleMessageThread> threads) {
-        if (threads.size() < 20) {
+        if (threads.size() < 200) {
             // Find threads that are new and try and start them
             for (int t = 0; t < threads.size(); t++) {
                 IndexSingleMessageThread thread = threads.get(t);
@@ -205,15 +219,18 @@ public class Indexer {
         }
     }
 
-    private static Map<String, Set<String>> checkAndMergeThreads(List<IndexSingleMessageThread> threads) {
+    private static Map<String, Set<String>> checkAndMergeThreads(List<IndexSingleMessageThread> threads, int limit) {
         Map<String, Set<String>> outputMap = new HashMap<String, Set<String>>();
         // Iterate through the threads and get the output from the finished ones and then remove them from the list
-        for (int t = 0; t < threads.size(); t++) {
-            IndexSingleMessageThread thread = threads.get(t);
-            if (thread.getState() == Thread.State.TERMINATED) {
-                outputMap = thread.getOutputMap();
-                threads.remove(t);
-                outputMap = mergeMaps(outputMap, outputMap);
+        if (threads.size() > limit) {
+            for (int t = 0; t < threads.size(); t++) {
+                IndexSingleMessageThread thread = threads.get(t);
+//            if (thread.getState() == Thread.State.TERMINATED) {
+                if (thread.isDone()) {
+                    outputMap = thread.getOutputMap();
+                    threads.remove(t);
+                    outputMap = mergeMaps(outputMap, outputMap);
+                }
             }
         }
         return outputMap;
@@ -337,7 +354,14 @@ public class Indexer {
 //        		fileName = "misc_keyword.txt";
 //        	}
 //            fileWrite = new FileWriter(indexPath + "\\" + fileName, true); //+ encryption.hash(keyword));
-            fileWrite = new FileWriter(indexPath + "\\" + keyword, true); //+ encryption.hash(keyword));
+            MP3Encryption enc = new MP3Encryption("illinois");
+            String keywordHash = getHash(keyword);
+            File file = new File(indexPath + "\\" + keywordHash);
+            if (file.exists()) {
+                System.err.println("There is a keyword collision!");
+            }
+            fileWrite = new FileWriter(indexPath + "\\" + keywordHash, true); //+ encryption.hash(keyword));
+
 
             toWrite = keyword + KEYWORD_DELIM;
             for (String messageID : map.get(keyword)) {
@@ -347,14 +371,34 @@ public class Indexer {
 
             //encryption.encrypt(toWrite);
 
-            for (char nextChar : toWrite.toCharArray()) {
-                fileWrite.write(nextChar);
-            }
+            fileWrite.write(toWrite);
+//            for (char nextChar : toWrite.toCharArray()) {
+//                fileWrite.write(nextChar);
+//            }
 
             fileWrite.close();
         }
 
         return true;
+    }
+
+    public static String getHash(String word) {
+
+        try {
+            byte[] bytesOfMessage = word.getBytes("UTF-8");
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] theDigest = md.digest(bytesOfMessage);
+            word = MP3Encryption.bytesToHex(theDigest);//new String(theDigest, "ASCII");
+            return word;
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return word + "messed up";
+
     }
 
     public static Map<String, Set<String>> mergeMaps(Map<String, Set<String>> map1, Map<String, Set<String>> map2) {
