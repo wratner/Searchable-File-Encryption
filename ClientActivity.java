@@ -107,13 +107,14 @@ public class ClientActivity extends Activity {
 			inStreamRead = new InputStreamReader(client.getInputStream());
 			buffRead = new BufferedReader(inStreamRead);
 			serverOutput = buffRead.readLine();
-			serverOutputBytes = serverOutput.getBytes();
+			serverOutput = serverOutput.substring(REPLY_DATA.length());
+			serverOutputBytes = encryption.hexStringToByteArray(serverOutput);
 
 			serverOutputBytes = encryption.decrypt(serverOutputBytes);
 			
 			serverOutput = new String(serverOutputBytes, "UTF-8");
 			
-			messageList.add(serverOutput.substring(REPLY_DATA.length()));
+			messageList.add(serverOutput);//.substring(REPLY_DATA.length()));
 			//messageList.add(encryption.decrypt(serverOutputBytes));//.substring(REPLY_DATA.length())));
 			output.close();
 			client = new Socket(SERVER_IP, SERVER_PORT);
