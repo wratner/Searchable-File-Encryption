@@ -11,10 +11,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
+//import mp3.MP3Encryption;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -34,7 +38,7 @@ public class ClientActivity extends Activity {
 	public static final String INDEXFILEPATH = "/storage/sdcard0/index.txt";
 	public static final int CACHEMAXLINES = 30;
 	public static final String KEY = "illinois";
-	public static final String SERVER_IP = "172.16.184.240";// "172.22.152.61";
+	public static final String SERVER_IP = "98.228.57.79";// "172.22.152.61";
 	/*
 	 * Set your VM's server IP here
 	 */
@@ -49,6 +53,7 @@ public class ClientActivity extends Activity {
 	public static final String BYE_CMD = "BYE";
 	public static final String DOWNLOAD_CMD = "DOWNLD ";
 	public static final String REPLY_DATA = "REPLY ";
+	public static BlindStorage blind;
 	public static ArrayList<String> messageList = new ArrayList<String>();
 
 	static ArrayAdapter<String> adapter;
@@ -84,6 +89,8 @@ public class ClientActivity extends Activity {
 					}
 					break;
 				}
+			/*	else
+					Part2Lookup(keyword, output);*/
 			}
 			dataIn.close();
 		} catch (Exception e) {
@@ -116,6 +123,24 @@ public class ClientActivity extends Activity {
 
 	}
 
+	public static String getHash(String word) {
+
+        try {
+            byte[] bytesOfMessage = word.getBytes("UTF-8");
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] theDigest = md.digest(bytesOfMessage);
+            word = MP3Encryption.bytesToHex(theDigest);//new String(theDigest, "ASCII");
+            return word;
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return word + "messed up";
+
+    }
 	// For Part-2
 	// (a) if index is present in local cache use it to find the document id
 	// (otherwise) use the download functionality to get the appropriate
@@ -139,24 +164,13 @@ public class ClientActivity extends Activity {
 		BufferedWriter buffWrite;
 
 		encryption = new MP3Encryption(KEY);
-
-		documentIdList = cacheLookup(keyword);
-		if (documentIdList.isEmpty()) {
-			// NEED TO HASH KEYWORD BEFORE SENDING REQUEST
-			output.write(LOOKUP_CMD + keyword);
-
-			inStreamRead = new InputStreamReader(client.getInputStream());
-			buffRead = new BufferedReader(inStreamRead);
-			serverOutput = buffRead.readLine();
-			serverOutputBytes = serverOutput.getBytes();
-
-			serverOutputBytes = encryption.decrypt(serverOutputBytes);
+		documentIdList = new ArrayList<String>();
+		//documentIdList = cacheLookup(keyword);
+		if (1 == 1) {
+			keyword = getHash(keyword);
+			String index = blind.getRemoteFile(keyword, client);
 			
-			serverOutput = new String(serverOutputBytes, "UTF-8");
-
-			indexLine = serverOutput.substring(REPLY_DATA.length());
-
-			tokens = indexLine.split(" ");
+			tokens = index.split(" ");
 			for (int i = 1; i < tokens.length; i++) {
 				documentIdList.add(tokens[i]);
 			}
@@ -165,7 +179,7 @@ public class ClientActivity extends Activity {
 				fileOutStream = new FileOutputStream(INDEXFILEPATH);
 				dataOut = new DataOutputStream(fileOutStream);
 				buffWrite = new BufferedWriter(new OutputStreamWriter(dataOut));
-				buffWrite.append(indexLine);
+				buffWrite.append(index);
 				dataOut.close();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -173,19 +187,10 @@ public class ClientActivity extends Activity {
 		}
 
 		for (String id : documentIdList) {
-			output.write(DOWNLOAD_CMD + id);
-
-			inStreamRead = new InputStreamReader(client.getInputStream());
-			buffRead = new BufferedReader(inStreamRead);
-			serverOutput = buffRead.readLine();
-			serverOutputBytes = serverOutput.getBytes();
-
-			serverOutputBytes = encryption.decrypt(serverOutputBytes);
-			
-			serverOutput = new String(serverOutputBytes, "UTF-8");
-			
-			messageList.add(serverOutput.substring(REPLY_DATA.length()));
+			client = new Socket(SERVER_IP, SERVER_PORT);
+			messageList.add(blind.getRemoteFile(id, client));
 		}
+
 
 		adapter.notifyDataSetChanged();
 
@@ -294,17 +299,18 @@ public class ClientActivity extends Activity {
 		button.setOnClickListener(new View.OnClickListener() {
 
 			public void onClick(View v) {
-				String keyword = textField.getText().toString(); // get the
+				String keyword = "SITARA";//textField.getText().toString(); // get the
 																	// keyword
 																	// from the
 																	// textfield
 				textField.setText(""); // Reset the text field to blank
-
+				blind = new BlindStorage(2048, false, true);
+				
 				try {
 					client = new Socket(SERVER_IP, SERVER_PORT); // connect to
 																	// server
 					output = new PrintWriter(client.getOutputStream(), true);
-					Lookup(keyword, output);
+					Part2Lookup(keyword, output);
 					// printwriter.flush();
 					// printwriter.close();
 					// client.close(); //closing the connection
