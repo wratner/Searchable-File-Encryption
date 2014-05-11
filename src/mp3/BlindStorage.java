@@ -32,7 +32,7 @@ public class BlindStorage {
     private String key = "illinois2";
     private int kappa = 25; //temp
     private int alpha = 8;
-    private int totalSize = 500000;
+    private int totalSize = 80000;
     private final String DIR = "./blind/";
     private final int BLOCK_SIZE = 2048;
     private byte[] nullBlock;
@@ -44,7 +44,14 @@ public class BlindStorage {
     public static final String DOWNLOAD_CMD = "DOWNLD ";
     public static final String REPLY_DATA = "REPLY ";
 
+    public int getFilesAdded() {
+        return filesAdded;
+    }
+
+    private int filesAdded;
+
     public BlindStorage(Integer blockSize, boolean create, boolean phone) {
+        filesAdded = 0;
 //        this.BLOCK_SIZE = BLOCK_SIZE;
         enc = new MP3Encryption("illinois");
         try {
@@ -425,6 +432,7 @@ public class BlindStorage {
         List<Integer> locations = getLocations(file.getName(), maxSize(chunks.size()));
         Integer[] intLocations = Arrays.copyOf(locations.toArray(), locations.size(), Integer[].class);
         boolean success = writeBlocks(chunks, intLocations);
+        filesAdded++;
         return success;
     }
 
