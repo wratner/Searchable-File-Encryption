@@ -16,8 +16,9 @@ import java.util.List;
 public class FileHash {
 
 	static int spc_count = -1;
+	static String version = "";
 	// CHANGE TO DIRECTORY YOU WANT ENCRYPTED FILES *******
-	static String dirLoc = "D:\\Users\\Read\\Documents\\GitHub\\MP3_small" + "\\";
+	static String dirLoc = "D:\\temp_CS463\\MP3_large2" + "\\";;
 	static String dirName = "";
 	static String bFileName = "";
 	static MP3Encryption enc = null;
@@ -40,16 +41,22 @@ public class FileHash {
 				bFileName = getMD5CheckSum(aFile.getPath());
 				String contents = readFile(aFile.getPath(),
 						Charset.defaultCharset());
-				// encContents = enc.encrypt(contents);
-				// decContents = enc.decrypt(encContents)
-				// System.out.println(contents);
-				fileList.add(bFileName);
-				File bFile = new File(dirLoc + dirName + "\\" + bFileName);
-
-				// copyFile(aFile, bFile);
-				PrintWriter out = new PrintWriter(bFile.getPath());
-				out.println(contents);
-				out.close();
+				if (version.equals("1")) {
+					encContents = enc.encrypt(contents);
+					fileList.add(bFileName);
+					File bFile = new File(dirLoc + dirName + "\\" + bFileName);
+					PrintWriter out = new PrintWriter(bFile.getPath());
+					out.println(encContents);
+					out.close();
+				}
+				if (version.equals("2")) {
+					fileList.add(bFileName);
+					File bFile = new File(dirLoc + "emails" + "\\" + dirName
+							+ "\\" + bFileName);
+					PrintWriter out = new PrintWriter(bFile.getPath());
+					out.println(contents);
+					out.close();
+				}
 			} catch (Exception e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -58,12 +65,26 @@ public class FileHash {
 		} else if (aFile.isDirectory()) {
 			System.out.println(spcs + "[DIR] " + aFile.getName());
 			if (aFile.getName().contains("-")) {
-				dirName = aFile.getName();
-				File newDir = new File(dirLoc + dirName);
-				if (!newDir.exists()) {
-					System.out.println("creating directory: "
-							+ newDir.getName());
-					newDir.mkdir();
+				if (version.equals("2")) {
+					File emailDir = new File(dirLoc + "emails");
+					if (!emailDir.exists()) {
+						emailDir.mkdir();
+					}
+					dirName = aFile.getName();
+					File newDir = new File(dirLoc + "emails" + "\\" + dirName);
+					if (!newDir.exists()) {
+						System.out.println("creating directory: "
+								+ newDir.getName());
+						newDir.mkdir();
+					}
+				} else {
+					dirName = aFile.getName();
+					File newDir = new File(dirLoc + dirName);
+					if (!newDir.exists()) {
+						System.out.println("creating directory: "
+								+ newDir.getName());
+						newDir.mkdir();
+					}
 				}
 			}
 			File[] listOfFiles = aFile.listFiles();
@@ -75,29 +96,6 @@ public class FileHash {
 			}
 		}
 		spc_count--;
-	}
-
-	public static void copyFile(File sourceFile, File destFile)
-			throws IOException {
-		if (!destFile.exists()) {
-			destFile.createNewFile();
-		}
-
-		FileChannel source = null;
-		FileChannel destination = null;
-
-		try {
-			source = new FileInputStream(sourceFile).getChannel();
-			destination = new FileOutputStream(destFile).getChannel();
-			destination.transferFrom(source, 0, source.size());
-		} finally {
-			if (source != null) {
-				source.close();
-			}
-			if (destination != null) {
-				destination.close();
-			}
-		}
 	}
 
 	public static String getMD5CheckSum(String filePath) throws Exception {
@@ -157,22 +155,35 @@ public class FileHash {
 		}
 	}
 
-	FileHash(String targetDir, String key) {
+	FileHash(String targetDir, String key, String versionNum) {
 		File aFile = new File(targetDir);
+		version = versionNum;
 		enc = new MP3Encryption(key);
 		//Process(aFile);
 		addFiletoList(dirLoc);
 
 		System.out.println(fileList);
 		System.out.println(dirList);
-
-		try {
-            Indexer indexer = new Indexer(key);
-			indexer.mapToIndexFiles(indexer.indexMessages(null, dirList,
-					fileList, "D:\\Users\\Read\\Documents\\GitHub\\Searchable-File-Encryption\\seperators.txt",
-					"D:\\Users\\Read\\Documents\\GitHub\\Searchable-File-Encryption\\stopwords.txt"), dirLoc);
-		} catch (IOException e) { // TODO Auto-generated catch block
-			e.printStackTrace();
+		if (versionNum.equals("1")) {
+			try {
+				Indexer indexer = new Indexer(key);
+				indexer.mapToIndexFile(indexer.indexMessages(null, dirList,
+						fileList, "D:\\temp_CS463\\seperators.txt",
+						"D:\\temp_CS463\\stopwords.txt"), dirLoc + "index.txt");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		if (versionNum.equals("2")) {
+			try {
+				Indexer indexer = new Indexer(key);
+				indexer.mapToIndexFiles(indexer.indexMessages(null, dirList,
+						fileList, "D:\\temp_CS463\\seperators.txt",
+						"D:\\temp_CS463\\stopwords.txt"), dirLoc + "keywords");
+			} catch (IOException e) { // TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 	}

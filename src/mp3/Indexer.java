@@ -7,12 +7,11 @@ import java.io.*;
 
 public class Indexer {
     private static char KEYWORD_DELIM = ' ';
-    private static String KEY;
-
-    public Indexer(String key) {
-        KEY = key;
-    }
-
+   private static String KEY;
+   
+   public Indexer(String key) {
+	   KEY = key;
+   }
     /*
      * Indexes a single message into a mapping of keywords to sets of messages,
      * given a string containing separators and a list of stopwords. Adds the
@@ -271,9 +270,10 @@ public class Indexer {
             }
             toWrite = toWrite.substring(0, toWrite.length() - 1) + '\n';
 
-            for (char nextChar : toWrite.toCharArray()) {
+           /* for (char nextChar : toWrite.toCharArray()) {
                 fileWrite.write(nextChar);
-            }
+            }*/
+            fileWrite.write(toWrite);
         }
 
         fileWrite.close();
@@ -337,27 +337,12 @@ public class Indexer {
      */
     public static Boolean mapToIndexFiles(Map<String, Set<String>> map, String indexPath) throws IOException {
         FileWriter fileWrite;
-        MP3Encryption encryption;
         String toWrite;
-        String fileName = "";
         if (map == null) {
             return false;
         }
 
-        encryption = new MP3Encryption(KEY);
-
         for (String keyword : map.keySet()) {
-
-//        	if (Character.isLetter(keyword.charAt(0))) {
-//        			fileName = Character.toLowerCase(keyword.charAt(0)) + "_keyword.txt";
-//        	}
-//        	else if (Character.isDigit(keyword.charAt(0))) {
-//        		fileName = "num_keyword.txt";
-//        	}
-//        	else {
-//        		fileName = "misc_keyword.txt";
-//        	}
-//            fileWrite = new FileWriter(indexPath + "\\" + fileName, true); //+ encryption.hash(keyword));
             String keywordHash = getHash(keyword);
             File file = new File(indexPath + "\\" + keywordHash);
             if (file.exists()) {
@@ -375,9 +360,7 @@ public class Indexer {
             //encryption.encrypt(toWrite);
 
             fileWrite.write(toWrite);
-//            for (char nextChar : toWrite.toCharArray()) {
-//                fileWrite.write(nextChar);
-//            }
+
 
             fileWrite.close();
         }

@@ -18,6 +18,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
+
 //import mp3.MP3Encryption;
 import android.app.Activity;
 import android.os.Bundle;
@@ -27,13 +28,17 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 public class ClientActivity extends Activity {
 
 	private static Socket client;
 	private PrintWriter output;
 	private EditText textField;
-	private Button button;
+	private Button button_send;
+	private Button button_part1;
+	private Button button_part2;
+	private Toast toast;
 	public ListView myListView;
 	public static final String INDEXFILEPATH = "/storage/sdcard0/index.txt";
 	public static final int CACHEMAXLINES = 30;
@@ -89,8 +94,6 @@ public class ClientActivity extends Activity {
 					}
 					break;
 				}
-			/*	else
-					Part2Lookup(keyword, output);*/
 			}
 			dataIn.close();
 		} catch (Exception e) {
@@ -282,8 +285,10 @@ public class ClientActivity extends Activity {
 
 		textField = (EditText) findViewById(R.id.editText1); // reference to the
 																// text field
-		button = (Button) findViewById(R.id.button1); // reference to the send
+		button_send = (Button) findViewById(R.id.button1); // reference to the send
 														// button
+		button_part1 = (Button) findViewById(R.id.button2);
+		button_part2 = (Button) findViewById(R.id.button3);
 		myListView = (ListView) findViewById(R.id.messageListView);
 
 		adapter = new ArrayAdapter<String>(this,
@@ -294,35 +299,70 @@ public class ClientActivity extends Activity {
 					.permitAll().build();
 			StrictMode.setThreadPolicy(policy);
 		}
-
-		// Button press event listener
-		button.setOnClickListener(new View.OnClickListener() {
-
+		button_part1.setOnClickListener(new View.OnClickListener() {
+			@Override
 			public void onClick(View v) {
-				String keyword = "SITARA";//textField.getText().toString(); // get the
-																	// keyword
-																	// from the
-																	// textfield
-				textField.setText(""); // Reset the text field to blank
-				blind = new BlindStorage(2048, false, true, KEY);
-				
-				try {
-					client = new Socket(SERVER_IP, SERVER_PORT); // connect to
-																	// server
-					output = new PrintWriter(client.getOutputStream(), true);
-					Part2Lookup(keyword, output);
-					// printwriter.flush();
-					// printwriter.close();
-					// client.close(); //closing the connection
+				Toast.makeText(getApplicationContext(), "Part 1 Set", Toast.LENGTH_LONG).show();; 
+				button_send.setOnClickListener(new View.OnClickListener() {
 
-				} catch (UnknownHostException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					System.out.println(e.getMessage());
-					e.printStackTrace();
-				}
+					public void onClick(View v) {
+						String keyword = textField.getText().toString(); // get the
+																			// keyword
+																			// from the
+																			// textfield
+						textField.setText(""); // Reset the text field to blank
+						try {
+							client = new Socket(SERVER_IP, SERVER_PORT); // connect to server
+							output = new PrintWriter(client.getOutputStream(), true);
+							Lookup(keyword, output);
+
+
+						} catch (UnknownHostException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							System.out.println(e.getMessage());
+							e.printStackTrace();
+						}
+					}
+				});
 			}
 		});
+
+		button_part2.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// Button press event listener
+				Toast.makeText(getApplicationContext(), "Part 2 Set", Toast.LENGTH_LONG).show();;
+				button_send.setOnClickListener(new View.OnClickListener() {
+
+					public void onClick(View v) {
+						String keyword = textField.getText().toString(); // get the
+																			// keyword
+																			// from the
+																			// textfield
+						textField.setText(""); // Reset the text field to blank
+						blind = new BlindStorage(2048, false, true, KEY);
+						
+						try {
+							client = new Socket(SERVER_IP, SERVER_PORT); // connect to
+																			// server
+							output = new PrintWriter(client.getOutputStream(), true);
+							Part2Lookup(keyword, output);
+
+
+						} catch (UnknownHostException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							System.out.println(e.getMessage());
+							e.printStackTrace();
+						}
+					}
+				});
+				
+			}
+		}); 
+		
 
 	}
 }
