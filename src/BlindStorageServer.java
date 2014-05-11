@@ -117,7 +117,8 @@ public class BlindStorageServer {
 
         try {
             //InetAddress addrr = InetAddress.getByName("172.16.184.240");
-            InetAddress addrr = InetAddress.getByName("192.168.1.189");
+            //InetAddress addrr = InetAddress.getByName("172.16.215.171");
+            InetAddress addrr = InetAddress.getByName(args[0]);
             serverSocket = new ServerSocket(SERVER_PORT, 5, addrr);  //Server socket
             if (serverSocket.isBound()) {
                 System.out.println("Server port bound: " + serverSocket.getLocalSocketAddress());
