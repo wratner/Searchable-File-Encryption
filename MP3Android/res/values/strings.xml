@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">MP3</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="send">Send</string>
+    <string name="Part1">Part 1</string>
+    <string name="Part2">Part 2</string>
+
+</resources>
