@@ -571,11 +571,12 @@ public class BlindStorage {
 
     public static void main(String[] args) {
         System.out.println("Starting...");
-        BlindStorage blind = new BlindStorage(2048, true, false);
-        File file = new File("./main.xml");
-        blind.addFile(file);
+        BlindStorage blind = new BlindStorage(2048, false, false);
+//        File file = new File("./main.xml");
+//        blind.addFile(file);
         System.out.println("Getting file...");
-        System.out.println(blind.getFile(file.getName()));
+        String output = blind.getFile(Indexer.getHash("SITARA"));
+        System.out.println(output);
     }
 
 }
