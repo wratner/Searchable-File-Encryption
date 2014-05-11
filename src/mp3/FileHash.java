@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +17,7 @@ public class FileHash {
 
 	static int spc_count = -1;
 	// CHANGE TO DIRECTORY YOU WANT ENCRYPTED FILES *******
-	static String dirLoc = "D:\\temp_CS463\\MP3" + "\\";
+	static String dirLoc = "D:\\temp_CS463\\MP3_large" + "\\";
 	static String dirName = "";
 	static String bFileName = "";
 	static MP3Encryption enc = null;
@@ -146,15 +148,26 @@ public class FileHash {
 
 	public static String readFile(String path, Charset encoding)
 			throws IOException {
-//		byte[] encoded = Files.readAllBytes(Paths.get(path));
-//		return new String(encoded, encoding);
-        return "";
+		byte[] encoded = Files.readAllBytes(Paths.get(path));
+		return new String(encoded, encoding);
+	}
+	
+	public static void addFiletoList (String dirPath) {
+		File folder = new File(dirPath);
+		File[] listOfFiles = folder.listFiles();
+		for (int i = 0; i < listOfFiles.length; i++) {
+			if (listOfFiles[i].isFile()) {
+				dirList.add(listOfFiles[i].getPath());
+				fileList.add(listOfFiles[i].getName());
+			}
+		}
 	}
 
 	FileHash(String targetDir, String key) {
 		File aFile = new File(targetDir);
 		enc = new MP3Encryption(key);
-		Process(aFile);
+		//Process(aFile);
+		addFiletoList(targetDir);
 		try {
 			Indexer.mapToIndexFile(Indexer.indexMessages(null, dirList,
 					fileList, "D:\\temp_CS463\\seperators.txt",
