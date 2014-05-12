@@ -6,5 +6,6 @@
 #javac -d bin src/mp3/*.java
 #javac -d bin -cp `pwd`/bin src/BlindStorageServer.java
 mkdir bin
+#javac -d bin -cp `pwd`/bin/javautil-3.1.1.jar src/mp3/*.java
 javac -d bin src/mp3/*.java
 javac -d bin -cp `pwd`/bin src/BlindStorageServer.java

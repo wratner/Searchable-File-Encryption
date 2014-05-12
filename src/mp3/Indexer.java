@@ -344,11 +344,11 @@ public class Indexer {
 
         for (String keyword : map.keySet()) {
             String keywordHash = getHash(keyword);
-            File file = new File(indexPath + "\\" + keywordHash);
+            File file = new File(indexPath + "/" + keywordHash);
             if (file.exists()) {
                 System.err.println("There is a keyword collision!");
             }
-            fileWrite = new FileWriter(indexPath + "\\" + keywordHash, true); //+ encryption.hash(keyword));
+            fileWrite = new FileWriter(indexPath + "/" + keywordHash, true); //+ encryption.hash(keyword));
 
 
             toWrite = keyword + KEYWORD_DELIM;

@@ -199,7 +199,7 @@ public class FileHash {
 //                        "D:\\temp_CS463\\stopwords.txt"), dirLoc + "keywords");
                     indexer.mapToIndexFiles(indexer.indexMessages(null, dirList,
                             fileList, "./seperators.txt",
-                            "./stopwords.txt"), dirLoc + "keywords");
+                            "./stopwords.txt"), dirLoc + "/" + "keywords");
                 } catch (IOException e) { // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
