@@ -8,3 +8,14 @@
 
 #NOTE:  Your index generation should be in Java
 #Call your java code with the arguments here
+
+mkdir small_output
+echo "Time to place"
+time java -cp `pwd`/bin mp3.Main ../small illinois 1 blah small_output blah
+
+echo "time to index"
+time java -cp `pwd`/bin mp3.Main ./small_output illinois 1 indexOnly small_output blah
+
+echo "Time to encrypt"
+time java -cp `pwd`/bin mp3.Main ../small illinois 1 blah small_output encrypt
+

@@ -9,7 +9,15 @@ public class Main {
     	String name = args[0];
     	String key = args[1];
         String versionNum = args[2];
-		new FileHash(name,key, versionNum);
+        boolean indexOnly = true;
+        boolean encryptIt = false;
+        if (args[5].equals("encrypt")) {
+            encryptIt = true;
+        }
+        if (!args[3].equals("indexOnly")) {
+            indexOnly = false;
+        }
+		new FileHash(name,key, versionNum, indexOnly, args[4], encryptIt);
     }
 
 /*    public static void testPadding() {
